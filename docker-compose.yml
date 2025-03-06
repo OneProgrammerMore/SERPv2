@@ -1,0 +1,45 @@
+# filepath: docker-compose.yml
+services:
+  backend:
+    build: ./backend 
+    container_name: SERP-backend
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    environment:
+      - DEBUG=1
+    command: ["sleep", "infinity"]
+    entrypoint: [/app/entrypoint.sh]
+    command: >
+      /bin/bash -c "chmod /app/entrypoint.sh"
+      
+    #command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5001", "--reload"]
+    # uvicorn main:app --host 0.0.0.0 --port 5001 --reload
+  
+  SERP-db:
+    image: postgres:15.10-bookworm
+    container_name: SERP-db
+    volumes:
+      - ./docker/SERP-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-serp_db}
+      
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: SERP-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:5001
+    depends_on:
+      - backend
+    stdin_open: true
