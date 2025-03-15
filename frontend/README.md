@@ -71,7 +71,7 @@ docker-compose up frontend
 
 - **Operador de Recursos**:
   - Email: resource@serp.cat
-  - Password: resources123
+  - Password: resource123
 
 - **Operador d'Emergències**:
   - Email: operator@serp.cat
