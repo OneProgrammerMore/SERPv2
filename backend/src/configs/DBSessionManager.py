@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import declarative_base
+from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from src.configs.config import settings
 
@@ -66,6 +68,10 @@ class DatabaseSessionManager:
             raise
         finally:
             await session.close()
+    
+    async def create_db_and_tables(self):
+        async with self._engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
 
 
 # sessionmanager = DatabaseSessionManager(DATABASE_URL, {"echo": settings.echo_sql})

@@ -51,8 +51,8 @@ class Location(SQLModel, table=True):
         index=True,
         nullable=False,
     )
-    latitude: float = Field(sa_column=Column(Float, nullable=False))
-    longitude: float = Field(sa_column=Column(Float, nullable=False))
+    latitude: float = Field(sa_column=Column(Float, nullable=True))
+    longitude: float = Field(sa_column=Column(Float, nullable=True))
     accuracy: Optional[float] = Field(sa_column=Column(Float, nullable=True))
     speed: Optional[float] = Field(sa_column=Column(Float, nullable=True))
     heading: Optional[float] = Field(sa_column=Column(Float, nullable=True))

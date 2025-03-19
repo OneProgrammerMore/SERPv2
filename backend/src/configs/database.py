@@ -3,6 +3,7 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 from src.configs.DBSessionManager import sessionmanager
 
 Base = declarative_base()
@@ -27,3 +28,4 @@ Base = declarative_base()
 async def get_db():
     async with sessionmanager.session() as session:
         yield session
+

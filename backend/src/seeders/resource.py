@@ -1,7 +1,7 @@
 from faker import Faker
 from src.seeders.address import address_seeder
 from src.seeders.location import location_seeder
-from src.models.resource import Resource, ResourceStatusEnum
+from src.models.resource import Resource, ResourceStatusEnum, ResourceTypeEnum
 import enum
 import random
 
@@ -17,8 +17,8 @@ RESOURCE_TYPES = ["ambulance", "firetruck", "police"]
 async def resource_seeder():
     
     fake = Faker()
-
-    resource_type = random.choice(RESOURCE_TYPES)
+    name = random.choice(RESOURCE_TYPES) + "-" + str(random.randint(100, 999))
+    resource_type = random.choice(list(ResourceTypeEnum))
 
     actual_address = await address_seeder()
     actual_location = await location_seeder()
@@ -32,6 +32,7 @@ async def resource_seeder():
     email = f"{fake.first_name()}{fake.last_name()}@mail.com"
 
     resourceSeed = Resource(
+        name = name,
         resource_type = resource_type,
 
         actual_address = actual_address,

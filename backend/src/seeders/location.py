@@ -7,8 +7,8 @@ import asyncio
 
 async def location_seeder():
     
-    latitude: float = round(random.uniform(0, 360), 5)
-    longitude:float = round(random.uniform(0, 360), 5)
+    latitude: float = round(random.uniform(41.26, 41.47), 6)
+    longitude:float = round(random.uniform(2.03, 2.25), 6)
     accuracy:float = round(random.uniform(0, 200), 5)
     speed:float = round(random.uniform(0, 360), 3)
     heading:float = round(random.uniform(0, 360), 5)

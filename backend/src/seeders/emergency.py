@@ -11,7 +11,7 @@ import string
 from src.configs.database import get_db
 
 
-resourcesNames = ["ambulance","firetruck","policecar"]
+resourcesNames = ["Fire","Heart Attack","Accident"]
 
 async def emergency_seeder():
 

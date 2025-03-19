@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional, Dict
 from fastapi import APIRouter,  HTTPException, Depends # type: ignore No warning about pydantic. Imported in requirements.txt
 
-from src.models.resource import Resource, ResourceStatusEnum
+from src.models.resource import Resource, ResourceStatusEnum, ResourceTypeEnum
 from src.models.location import Location
 from src.models.address import Address
 from src.models.emergency import Emergency
@@ -18,13 +18,23 @@ import uuid as uuid_pkg
 router = APIRouter()
 
 # LIST ALL RESOURCES
-@router.get("/api/devices", response_model=List[Resource], tags=["Devices"])
+# @router.get("/api/devices", response_model=List[Resource], tags=["Devices"])
+@router.get("/api/devices", tags=["Devices"])
 async def list_devices(session: Annotated[AsyncSession, Depends(get_db)]):
     """List all devices"""
-    resources = await session.execute(select(Resource))
-    # return emergencies
-    items = resources.scalars().all()
-    return items
+    # resources = await session.execute(select(Resource))
+    # items = resources.scalars().all()
+    # return items
+
+    resources = await session.execute(select(
+        Resource, Location).join(Location, Location.id == Resource.actual_location)
+    )
+    result = resources.all()
+    resources_with_location = []
+    for resource, actual_location in result:
+        print("DEBUG LOCATION RESOURCE", actual_location)
+        resources_with_location.append({**resource.dict(), "location_resource_data": actual_location.dict()})
+    return resources_with_location
 
 
 
@@ -32,7 +42,8 @@ async def list_devices(session: Annotated[AsyncSession, Depends(get_db)]):
 # CREATE A RESOURCE
 class ResourceCreateRequest(BaseModel):
 
-    resource_type: Optional[str] = Field(None, max_length=128)
+    name: Optional[str] = Field(None, max_length=128)
+    resource_type: Optional[ResourceTypeEnum] = ResourceTypeEnum.UNKNOWN
             
     actual_address_longitude: Optional[float] = Field(None, ge=-180, le=180)
     actual_address_latitude: Optional[float] = Field(None, ge=-90, le=90)
@@ -86,6 +97,7 @@ async def create_device(db: Annotated[AsyncSession, Depends(get_db)], request: R
         # await db.flush()  # Get product.id before committing
 
         resource = Resource(
+            name = request.name,
             resource_type=request.resource_type,
             
             actual_address=actual_address.id,

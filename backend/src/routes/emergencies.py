@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field # type: ignore No warning about pydantic. 
 from datetime import datetime
 import uuid
 from fastapi import APIRouter, HTTPException, Depends # type: ignore No warning about pydantic. Imported in requirements.txt
-# from src.routes.resources import devices
+from fastapi.responses import JSONResponse
 from src.routes.qosod import QoSConfig, activate_device_qos, deactivate_device_qos
 
 # Importar servicio de asignaciones de emergencia
@@ -13,12 +13,13 @@ from src.configs.database import get_db
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload, selectinload
 
 
 from enum import Enum
 
 from src.models.emergency import Emergency, EmergencyType, StatusType, PriorityType
-from src.models.resource import Resource
+from src.models.resource import Resource, ResourceStatusEnum
 from src.models.location import Location
 from src.models.address import Address
 
@@ -29,15 +30,31 @@ from fastapi.responses import ORJSONResponse
 
 router = APIRouter()
 
+
+
+def convertToDict(alqModel):
+    return [MyModelSchema(**item.__dict__) for item in alqModel]
+
+
+
 # LIST ALL EMERGENCIES
-@router.get("/api/alerts", response_model=List[Emergency], tags=["Alerts"])
+# @router.get("/api/alerts", response_model=List[Emergency], tags=["Alerts"])
+@router.get("/api/alerts", tags=["Alerts"])
 async def list_alerts(session: Annotated[AsyncSession, Depends(get_db)]):
     """List all alerts"""
-    # return [Alert(**alert.dict()) for alert in alerts.values()]
-    emergencies = await session.execute(select(Emergency))
-    # return emergencies
-    items = emergencies.scalars().all()
-    return items
+    # emergencies = await session.execute(select(Emergency))
+    # items = emergencies.scalars().all()
+    # return items
+
+    emergencies = await session.execute(select(
+        Emergency, Location).join(Location, Location.id == Emergency.location_emergency)
+    )
+    result = emergencies.all()
+    emergencies_with_location = []
+    for emergency, location_emergency in result:
+        print("DEBUG LOCATION EMERGENCY", location_emergency)
+        emergencies_with_location.append({**emergency.dict(), "location_emergency_data": location_emergency.dict()})
+    return emergencies_with_location
 
 
 # CREATE EMERGENCY
@@ -48,6 +65,11 @@ class EmergencyRequest(BaseModel):
     longitude: float = Field(..., ge=-180, le=180)
     emergency_type: EmergencyType
     priority: PriorityType
+    status: StatusType
+    # Non-optional fields
+    name_contact: Optional[str]  = None
+    telephone_contact: Optional[str]  = None
+    id_contact: Optional[str]  = None
 
 
 @router.post("/api/alerts", response_model=Emergency, status_code=201, tags=["Alerts"])
@@ -74,7 +96,11 @@ async def create_alert(request: EmergencyRequest, db: AsyncSession = Depends(get
             description=request.description,
             location_emergency=location.id,
             address_emergency=address.id,
-            priority=request.priority
+            priority=request.priority,
+            status=request.status,
+            name_contact=request.name_contact,
+            telephone_contact=request.telephone_contact,
+            id_contact=request.id_contact
         )
         db.add(emergency)
         e_id =  emergency.id
@@ -84,8 +110,8 @@ async def create_alert(request: EmergencyRequest, db: AsyncSession = Depends(get
     return {"message": "Alert Created", "alert_id": e_id}
 
 # READ EMERGENCY
-@router.get("/api/alerts/{alert_id}", response_model=Emergency, tags=["Alerts"])
-# @router.get("/api/alerts/{alert_id}", tags=["Alerts"])
+# @router.get("/api/alerts/{alert_id}", response_model=Emergency, tags=["Alerts"])
+@router.get("/api/alerts/{alert_id}", tags=["Alerts"])
 async def get_alert(alert_id: str, db: AsyncSession = Depends(get_db)):
     """Get alert details"""
     stmt = select(Emergency).where(Emergency.id == alert_id)
@@ -134,13 +160,18 @@ async def update_alert(alert_id: str, request: EmergencyUpdateRequest, db: Async
     #Update Emergency
     for field, value in request.dict(exclude_unset=True).items():
         setattr(emergency, field, value)
-    db.commit()
+    # for field, value in vars(request).items():
+    #     setattr(emergency, field, value)
+
+    # emergency.modified = modified_now
+    db.add(emergency)
+    await db.commit()
 
     await db.refresh(emergency)
     # await db.refresh(emergency.scalars().first())
 
     # Si estamos resolviendo la alerta
-    if emergency.status == StatusType.Solved:
+    if emergency.status == StatusType.SOLVED:
         print("DEBUG - EmergecnydID ", emergency)
         # print(dir(emergency.fetchone()))
         #Get associated Resources
@@ -216,12 +247,67 @@ async def delete_device(db: Annotated[AsyncSession, Depends(get_db)], emergency_
 
 
 # I DO NOT KNOW WHAT IS IT FOR - ^^' - To Do - Check IF it works
-@router.get("/api/devices/{resource_id}/assignments", response_model=List[Emergency], tags=["Alerts"])
-# async def get_device_assignments(device_id: str):
-async def get_device_assignments(resource_id: str, db: AsyncSession = Depends(get_db)):
-    """Get alerts assigned to a specific device"""
-    stmt = select(Resource).where(Resource.id == resource_id)
-    result = await db.execute(stmt)
+# @router.get("/api/devices/{resource_id}/assignments", response_model=List[Emergency], tags=["Alerts"])
+@router.get("/api/devices/{resourceID}/assignments", tags=["Alerts"])
+async def get_device_assignments(resourceID: str, session: AsyncSession = Depends(get_db)):
+    """Get resources assigned to a specific emergency"""
+    # stmt = select(Resource).where(Resource.id == resource_id)
+    # result = await db.execute(stmt)
+    # if not result:
+    #     raise HTTPException(status_code=404, detail="Example not found")
+    # return result.scalars().first()
+    stmt = select(Resource).where(Resource.id == resourceID)
+    result = (await session.execute(stmt))
     if not result:
         raise HTTPException(status_code=404, detail="Example not found")
-    return result.scalars().first()
+    resource = result.unique().scalar_one()
+
+    return resource.emergencies
+
+
+class EmergencyAssignResourcesRequest(BaseModel):
+    resourcesIDs: list[uuid_pkg.UUID]
+
+#Assign resources to emergency by ID
+@router.post("/api/alerts/{emergencyID}/assign", tags=["Alerts"])
+async def add_device_assignments(emergencyID: str, request: EmergencyAssignResourcesRequest, session: AsyncSession = Depends(get_db)):
+    """Get alerts assigned to a specific device"""
+    
+    #Select Emergency From Database By emergencyID
+    stmt = select(Emergency).where(Emergency.id == emergencyID)
+    result = (await session.execute(stmt))
+    if not result:
+        raise HTTPException(status_code=404, detail="Example not found")
+    emergency = result.unique().scalar_one()
+
+    #Clean Old Resources Status to Available
+    for resource in emergency.resources:
+        stmt = select(Resource).where(Resource.id == resource.id)
+        result = await session.execute(stmt)
+        if not result:
+            raise HTTPException(status_code=404, detail="Resource not found")
+        resource = result.scalar_one()
+        resource.status = ResourceStatusEnum.AVAILABLE
+        session.add(resource)
+
+    #Select Assigned Resources From Database and add to db_resources var
+    db_resources = []
+    for resourceID in request.resourcesIDs:
+        stmt = select(Resource).where(Resource.id == resourceID)
+        result = await session.execute(stmt)
+        if not result:
+            raise HTTPException(status_code=404, detail="Resource not found")
+        resource = result.scalar_one()
+        resource.status = ResourceStatusEnum.BUSY
+        session.add(resource)
+        db_resources.append(resource)
+    session.commit()
+
+    #Add assigned resources to emergency in the many to many table
+    emergency.resources = db_resources
+    session.add(emergency)
+    await session.commit()
+    #Refresh the emergency model to return
+    await session.refresh(emergency)
+
+    return emergency

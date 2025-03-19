@@ -29,36 +29,72 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon
 } from '@mui/icons-material';
+import {APIURL, APIProtocol} from "../../constants.js"
+
 
 const EditorIncidents = () => {
-  const [incidents, setIncidents] = React.useState([]);
+  const [emergencies, setEmergencies] = React.useState([]);
   const [openDialog, setOpenDialog] = React.useState(false);
-  const [selectedIncident, setSelectedIncident] = React.useState(null);
+  const [selectedEmergency, setSelectedEmergency] = React.useState(null);
   const [orderDirection, setOrderDirection] = React.useState('desc');
-  const [editForm, setEditForm] = React.useState({
-    title: '',
+  const [formData, setFormData] = React.useState({
+    name: '',
     description: '',
     status: '',
     priority: '',
-    type: ''
+    emergency_type: ''
   });
-
+  // const [modEmergencyID, setModEmergencyID] =  React.useState(null);
   // Cargar incidencias del LocalStorage
+  // useEffect(() => {
+  //   try {
+  //     const storedIncidents = JSON.parse(localStorage.getItem('incidents') || '[]');
+  //     console.log('Incidencias almacenadas:', storedIncidents);
+  //     const sortedIncidents = sortIncidents(storedIncidents, 'desc');
+  //     setIncidents(sortedIncidents);
+  //   } catch (error) {
+  //     console.error('Error al cargar las incidencias:', error);
+  //     setIncidents([]);
+  //   }
+  // }, []);
+  const fetchEmergencies = ()  => {
+    setEmergencies([])
+    const endpoint = APIProtocol + APIURL + '/api/alerts'
+    fetch(endpoint, {
+      method: 'GET', // or 'PUT'
+      headers: {
+        'Accept': 'application/json',
+      }
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        console.log(
+          "Looks like there was a problem. Status Code: " + response.status
+        );
+        return;
+      }
+      response.json().then(function(data) {
+        setEmergencies(data)
+        console.log(data)
+      });
+    })
+    .catch(function(err) {
+      console.log("Error in Dashboard while fetching emergencies", err);
+    });
+  }
+
   useEffect(() => {
     try {
-      const storedIncidents = JSON.parse(localStorage.getItem('incidents') || '[]');
-      console.log('Incidencias almacenadas:', storedIncidents);
-      const sortedIncidents = sortIncidents(storedIncidents, 'desc');
-      setIncidents(sortedIncidents);
+      fetchEmergencies()
     } catch (error) {
       console.error('Error al cargar las incidencias:', error);
-      setIncidents([]);
+      setEmergencies([]);
     }
   }, []);
 
   // Función auxiliar para ordenar incidencias
-  const sortIncidents = (incidentsList, direction) => {
-    return [...incidentsList].sort((a, b) => {
+  const sortEmergencies= (emergenciesList, direction) => {
+    return [...emergenciesList].sort((a, b) => {
       // Primero ordenar por estado (activos arriba, resueltos abajo)
       if (a.status !== b.status) {
         return a.status === 'resolved' ? 1 : -1;
@@ -82,93 +118,154 @@ const EditorIncidents = () => {
   // Función para ordenar incidencias
   const handleSort = () => {
     const newDirection = orderDirection === 'asc' ? 'desc' : 'asc';
-    const sortedIncidents = sortIncidents(incidents, newDirection);
-    setIncidents(sortedIncidents);
+    const sortedEmergencies = sortEmergencies(emergencies, newDirection);
+    setEmergencies(sortedEmergencies);
     setOrderDirection(newDirection);
   };
 
-  const handleEditClick = (incident) => {
-    setSelectedIncident(incident);
-    setEditForm({
-      title: incident.title,
-      description: incident.description,
-      status: incident.status,
-      priority: incident.priority,
-      type: incident.type
+  const handleEditClick = (emergency) => {
+    setSelectedEmergency(emergency);
+    // setModEmergencyID(emergency.id);
+    setFormData({
+      name: emergency.name,
+      description: emergency.description,
+      status: emergency.status,
+      priority: emergency.priority,
+      emergency_type: emergency.emergency_type
     });
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setSelectedIncident(null);
-    setEditForm({
-      title: '',
+    setSelectedEmergency(null);
+    setFormData({
+      name: '',
       description: '',
       status: '',
       priority: '',
-      type: ''
+      emergency_type: ''
     });
   };
 
-  const handleFormChange = (event) => {
-    const { name, value } = event.target;
-    setEditForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  // const handleFormChange = (event) => {
+  //   const { name, value } = event.target;
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     [name]: value
+  //   }));
+  // };
 
-  const handleSaveEdit = () => {
-    const updatedIncidents = incidents.map(incident => {
-      if (incident.id === selectedIncident.id) {
-        // Si el estado es 'resolved', ignoramos la prioridad seleccionada
-        const updatedIncident = {
-          ...incident,
-          ...editForm,
-          lastUpdate: new Date().toISOString()
-        };
+  // const handleSaveEdit = () => {
+  //   const updatedEmergencies = emergencies.map(emergency => {
+  //     if (emergency.id === selectedEmergency.id) {
+  //       // Si el estado es 'resolved', ignoramos la prioridad seleccionada
+  //       const updatedEmergency = {
+  //         ...emergency,
+  //         ...editForm,
+  //         lastUpdate: new Date().toISOString()
+  //       };
         
-        // Si el estado es 'resolved', forzamos la prioridad a 'resolved'
-        if (editForm.status === 'resolved') {
-          updatedIncident.priority = 'resolved';
+  //       // Si el estado es 'resolved', forzamos la prioridad a 'resolved'
+  //       if (editForm.status === 'resolved') {
+  //         updatedEmergency.priority = 'resolved';
           
-          // Si hay un recurso asignado, lo marcamos como disponible
-          if (incident.selectedResource) {
-            const storedResources = JSON.parse(localStorage.getItem('resources') || '[]');
-            const updatedResources = storedResources.map(resource => {
-              if (resource.id === parseInt(incident.selectedResource)) {
-                return { ...resource, status: 'disponible' };
-              }
-              return resource;
-            });
-            localStorage.setItem('resources', JSON.stringify(updatedResources));
-          }
-        }
+  //         // Si hay un recurso asignado, lo marcamos como disponible
+  //         if (emergency.selectedResource) {
+  //           const storedResources = JSON.parse(localStorage.getItem('resources') || '[]');
+  //           const updatedResources = storedResources.map(resource => {
+  //             if (resource.id === parseInt(emergency.selectedResource)) {
+  //               return { ...resource, status: 'disponible' };
+  //             }
+  //             return resource;
+  //           });
+  //           localStorage.setItem('resources', JSON.stringify(updatedResources));
+  //         }
+  //       }
         
-        return updatedIncident;
+  //       return updatedEmergency;
+  //     }
+  //     return emergency;
+  //   });
+
+  //   localStorage.setItem('emergencies', JSON.stringify(updatedEmergencies));
+  //   // Aplicar el ordenamiento después de guardar
+  //   const sortedEmergencies = sortEmergencies(updatedEmergencies, orderDirection);
+  //   setEmergencies(sortedEmergencies);
+  //   handleCloseDialog();
+  // };
+  const handleSaveEdit = (event) => {
+    event.preventDefault();
+    const updatedEmergency = {
+      ...formData,
+    };
+    
+    const endpoint = APIProtocol + APIURL + '/api/alerts/' + selectedEmergency.id
+    console.log("Endpoint Update", endpoint)
+    console.log(updatedEmergency)
+
+
+    fetch(endpoint, {
+      method: 'PATCH', // or 'PUT'
+      headers: {
+        // 'Accept': 'application/json',
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify(updatedEmergency),
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        console.log(
+          "Looks like there was a problem. Status Code: " + response.status
+        );
+        return;
       }
-      return incident;
+      console.log("Succesfully updated the emergency")
+      fetchEmergencies();
+      handleCloseDialog();
+    })
+    .catch(function(err) {
+      console.log("Error in Create new Emergency while creating emergency", err);
     });
-
-    localStorage.setItem('incidents', JSON.stringify(updatedIncidents));
-    // Aplicar el ordenamiento después de guardar
-    const sortedIncidents = sortIncidents(updatedIncidents, orderDirection);
-    setIncidents(sortedIncidents);
-    handleCloseDialog();
   };
+  
 
-  const handleDelete = (incidentId) => {
-    const updatedIncidents = incidents.filter(incident => incident.id !== incidentId);
-    localStorage.setItem('incidents', JSON.stringify(updatedIncidents));
-    setIncidents(updatedIncidents);
+  // const handleDelete = (emergencyID) => {
+  //   const updatedEmergencies = emergencies.filter(emergency => emergency.id !== emergencyID);
+  //   localStorage.setItem('emergencies', JSON.stringify(updatedEmergencies));
+  //   setEmergencies(updatedEmergencies);
+  // };
+
+  const handleDelete = (emergencyID) => {
+    const endpoint = APIProtocol + APIURL + '/api/alerts/' + emergencyID
+    console.log("Endpoint Update", endpoint)
+    fetch(endpoint, {
+      method: 'DELETE', // or 'PUT'
+      headers: {
+        // 'Accept': 'application/json',
+        "Content-type": "application/json"
+      },
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        console.log(
+          "Looks like there was a problem. Status Code: " + response.status
+        );
+        return;
+      }
+      console.log("Succesfully updated the emergency")
+      fetchEmergencies();
+    })
+    .catch(function(err) {
+      console.log("Error in Create new Emergency while creating emergency", err);
+    });
   };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Editor d'Emergències
+          Emergencies Editor
         </Typography>
       </Box>
 
@@ -176,56 +273,56 @@ const EditorIncidents = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Títol</TableCell>
-              <TableCell>Descripció</TableCell>
-              <TableCell>Estat</TableCell>
+              <TableCell>Title</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>State</TableCell>
               <TableCell>
                 <TableSortLabel
                   active={true}
                   direction={orderDirection}
                   onClick={handleSort}
                 >
-                  Prioritat
+                  Priority
                 </TableSortLabel>
               </TableCell>
-              <TableCell>Tipus</TableCell>
-              <TableCell>Última Actualització</TableCell>
-              <TableCell>Accions</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Last Update</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {incidents.map((incident) => (
-              <TableRow key={incident.id}>
-                <TableCell>{incident.title}</TableCell>
-                <TableCell>{incident.description}</TableCell>
+            {emergencies.map((emergency) => (
+              <TableRow key={emergency.id}>
+                <TableCell>{emergency.name}</TableCell>
+                <TableCell>{emergency.description}</TableCell>
                 <TableCell>
                   <Chip
-                    label={incident.status === 'active' ? 'Actiu' : 'Resolt'}
-                    color={incident.status === 'active' ? 'error' : 'success'}
+                    label={emergency.status === 'Active' ? 'Active' : 'Solved'}
+                    color={emergency.status === 'Active' ? 'error' : 'success'}
                     size="small"
                   />
                 </TableCell>
                 <TableCell>
                   <Chip
                     label={
-                      incident.status === 'resolved' ? 'Resolt' :
-                      incident.priority === 'critical' ? 'Crítica' :
-                      incident.priority === 'high' ? 'Alta' :
-                      incident.priority === 'medium' ? 'Mitjana' : 'Baixa'
+                      emergency.priority === 'Critical' ? 'Critical' :
+                      emergency.priority === 'High' ? 'High' :
+                      emergency.priority === 'Medium' ? 'Medium' :
+                      emergency.priority === 'Low' ? 'Low' : 'Unknown'
                     }
                     color={
-                      incident.status === 'resolved' ? 'success' :
-                      incident.priority === 'critical' ? 'error' :
-                      incident.priority === 'high' ? 'warning' :
-                      incident.priority === 'medium' ? 'warning' : 'info'
+                      emergency.status === 'Solved' ? 'success' :
+                      emergency.priority === 'Critical' ? 'error' :
+                      emergency.priority === 'High' ? 'warning' :
+                      emergency.priority === 'Medium' ? 'warning' : 'info'
                     }
                     sx={{
                       '&.MuiChip-root': {
                         backgroundColor: 
-                          incident.status === 'resolved' ? '#4caf50' :
-                          incident.priority === 'critical' ? '#ff0000' :
-                          incident.priority === 'high' ? '#ff9800' :
-                          incident.priority === 'medium' ? '#ffeb3b' : '#2196f3',
+                          emergency.status === 'Solved' ? '#4caf50' :
+                          emergency.priority === 'Critical' ? '#ff0000' :
+                          emergency.priority === 'High' ? '#ff9800' :
+                          emergency.priority === 'Medium' ? '#ffeb3b' : '#2196f3',
                         color: 'white'
                       }
                     }}
@@ -235,23 +332,23 @@ const EditorIncidents = () => {
                 <TableCell>
                   <Chip
                     label={
-                      incident.type === 'fire' ? 'Incendi' :
-                      incident.type === 'medical' ? 'Emergència Mèdica' :
-                      incident.type === 'accident' ? 'Accident' :
-                      incident.type === 'natural' ? 'Desastre Natural' : 'Altres'
+                      emergency.emergency_type === 'Fire' ? 'Fire' :
+                      emergency.emergency_type === 'Medical' ? 'Medical Emergency' :
+                      emergency.emergency_type === 'Accident' ? 'Accident' :
+                      emergency.emergency_type === 'Natural Disaster' ? 'Natural Disaster' : 'Other'
                     }
                     color="default"
                     size="small"
                   />
                 </TableCell>
                 <TableCell>
-                  {new Date(incident.lastUpdate).toLocaleString()}
+                  {new Date(emergency.time_updated ? emergency.time_updated : emergency.time_created).toLocaleString()}
                 </TableCell>
                 <TableCell>
-                  <IconButton size="small" onClick={() => handleEditClick(incident)}>
+                  <IconButton size="small" onClick={() => handleEditClick(emergency)}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(incident.id)}>
+                  <IconButton size="small" color="error" onClick={() => handleDelete(emergency.id)}>
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
@@ -262,17 +359,18 @@ const EditorIncidents = () => {
       </TableContainer>
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Editar Incident</DialogTitle>
+        <DialogTitle>Edit Emergency</DialogTitle>
+        <form onSubmit={handleSaveEdit}>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Títol"
-                  name="title"
-                  value={editForm.title}
-                  onChange={handleFormChange}
+                  label="Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -280,23 +378,25 @@ const EditorIncidents = () => {
                   fullWidth
                   multiline
                   rows={4}
-                  label="Descripció"
+                  label="Description"
                   name="description"
-                  value={editForm.description}
-                  onChange={handleFormChange}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Estat</InputLabel>
+                  <InputLabel>Status</InputLabel>
                   <Select
                     name="status"
-                    value={editForm.status}
-                    label="Estat"
-                    onChange={handleFormChange}
+                    value={formData.status}
+                    label="Status"
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   >
-                    <MenuItem value="active">Actiu</MenuItem>
-                    <MenuItem value="resolved">Resolt</MenuItem>
+                    <MenuItem value="Active">Active</MenuItem>
+                    <MenuItem value="Solved">Sovled</MenuItem>
+                    <MenuItem value="Archived">Archived</MenuItem>
+                    <MenuItem value="Pending">Pending</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -305,43 +405,45 @@ const EditorIncidents = () => {
                   <InputLabel>Prioritat</InputLabel>
                   <Select
                     name="priority"
-                    value={editForm.priority}
-                    label="Prioritat"
-                    onChange={handleFormChange}
+                    value={formData.priority}
+                    label="Priority"
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                   >
-                    <MenuItem value="critical">Crítica</MenuItem>
-                    <MenuItem value="high">Alta</MenuItem>
-                    <MenuItem value="medium">Mitjana</MenuItem>
-                    <MenuItem value="low">Baixa</MenuItem>
+                    <MenuItem value="Critical">Critical</MenuItem>
+                    <MenuItem value="High">High</MenuItem>
+                    <MenuItem value="Medium">Medium</MenuItem>
+                    <MenuItem value="Low">Low</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Tipus d'Emergència</InputLabel>
+                  <InputLabel>Emergency Type</InputLabel>
                   <Select
-                    name="type"
-                    value={editForm.type}
-                    label="Tipus d'Emergència"
-                    onChange={handleFormChange}
+                    name="emergency_type"
+                    value={formData.emergency_type}
+                    label="Emergency Type"
+                    onChange={(e) => setFormData({ ...formData, emergency_type: e.target.value })}
                   >
-                    <MenuItem value="fire">Incendi</MenuItem>
-                    <MenuItem value="medical">Emergència Mèdica</MenuItem>
-                    <MenuItem value="accident">Accident</MenuItem>
-                    <MenuItem value="natural">Desastre Natural</MenuItem>
-                    <MenuItem value="other">Altres</MenuItem>
+                    <MenuItem value="Fire">Fire</MenuItem>
+                    <MenuItem value="Medical">Medical</MenuItem>
+                    <MenuItem value="Accident">Accident</MenuItem>
+                    <MenuItem value="Natural Disaster">Natural Disaster</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
             </Grid>
           </Box>
-        </DialogContent>
+        
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel·lar</Button>
-          <Button onClick={handleSaveEdit} variant="contained">
+          <Button  type="submit" variant="contained">
             Guardar
           </Button>
         </DialogActions>
+        </DialogContent>
+        </form>
       </Dialog>
     </Box>
   );

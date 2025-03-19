@@ -27,6 +27,7 @@ import {
 import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import {APIURL, APIProtocol} from "../../constants.js"
 
 const modalStyle = {
   position: 'absolute',
@@ -98,111 +99,171 @@ const Resources = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [openMap, setOpenMap] = useState(false);
-  const [newResource, setNewResource] = useState({
+  const [formData, setFormData] = useState({
     name: '',
-    type: '',
-    status: 'disponible',
-    location: '',
-    latitude: '',
-    longitude: '',
+    resource_type: '',
+    status: 'Available',
+    actual_latitude: '',
+    actual_longitude: '',
   });
 
+  // useEffect(() => {
+  //   // Cargar recursos desde localStorage
+  //   const storedResources = localStorage.getItem('resources');
+  //   if (storedResources) {
+  //     setResources(JSON.parse(storedResources));
+  //   } else {
+  //     // Si no hay recursos en localStorage, usar los datos de ejemplo
+  //     const mockResources = [
+  //       {
+  //         id: 1,
+  //         name: 'Ambulancia 1',
+  //         type: 'ambulancia',
+  //         status: 'disponible',
+  //         location: '41.3879, 2.16992',
+  //         latitude: 41.3879,
+  //         longitude: 2.16992,
+  //         lastUpdate: '2024-03-03T12:00:00'
+  //       },
+  //       {
+  //         id: 2,
+  //         name: 'Patrulla 1',
+  //         type: 'policia',
+  //         status: 'disponible',
+  //         location: '41.3851, 2.1734',
+  //         latitude: 41.3851,
+  //         longitude: 2.1734,
+  //         lastUpdate: '2024-03-03T13:30:00'
+  //       },
+  //       {
+  //         id: 3,
+  //         name: 'Camión Bomberos 1',
+  //         type: 'bombero',
+  //         status: 'disponible',
+  //         location: '41.3902, 2.1647',
+  //         latitude: 41.3902,
+  //         longitude: 2.1647,
+  //         lastUpdate: '2024-03-03T14:15:00'
+  //       }
+  //     ];
+  //     setResources(mockResources);
+  //     localStorage.setItem('resources', JSON.stringify(mockResources));
+  //   }
+  //   setIsLoading(false);
+  // }, []);
+  const fetchResources = ()  => {
+    const endpoint = APIProtocol + APIURL + '/api/devices'
+    fetch(endpoint, {
+      method: 'GET', // or 'PUT'
+      headers: {
+        'Accept': 'application/json',
+      }
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        console.log(
+          "Looks like there was a problem. Status Code: " + response.status
+        );
+        return;
+      }
+      response.json().then(function(data) {
+        setResources(data)
+        console.log(data)
+        setIsLoading(false);
+      });
+    })
+    .catch(function(err) {
+      console.log("Error in Dashboard while fetching emergencies", err);
+    });
+  }
   useEffect(() => {
-    // Cargar recursos desde localStorage
-    const storedResources = localStorage.getItem('resources');
-    if (storedResources) {
-      setResources(JSON.parse(storedResources));
-    } else {
-      // Si no hay recursos en localStorage, usar los datos de ejemplo
-      const mockResources = [
-        {
-          id: 1,
-          name: 'Ambulancia 1',
-          type: 'ambulancia',
-          status: 'disponible',
-          location: '41.3879, 2.16992',
-          latitude: 41.3879,
-          longitude: 2.16992,
-          lastUpdate: '2024-03-03T12:00:00'
-        },
-        {
-          id: 2,
-          name: 'Patrulla 1',
-          type: 'policia',
-          status: 'disponible',
-          location: '41.3851, 2.1734',
-          latitude: 41.3851,
-          longitude: 2.1734,
-          lastUpdate: '2024-03-03T13:30:00'
-        },
-        {
-          id: 3,
-          name: 'Camión Bomberos 1',
-          type: 'bombero',
-          status: 'disponible',
-          location: '41.3902, 2.1647',
-          latitude: 41.3902,
-          longitude: 2.1647,
-          lastUpdate: '2024-03-03T14:15:00'
-        }
-      ];
-      setResources(mockResources);
-      localStorage.setItem('resources', JSON.stringify(mockResources));
-    }
-    setIsLoading(false);
+    fetchResources()
+    const idResources = setInterval(() => (
+      fetchResources()
+    ), 100000);
+    return () => clearInterval(idResources) ;  
   }, []);
 
   const handleModalOpen = () => setOpenModal(true);
   const handleModalClose = () => {
     setOpenModal(false);
-    setNewResource({
+    setFormData({
       name: '',
       type: '',
-      status: 'disponible',
-      location: '',
-      latitude: '',
-      longitude: '',
+      status: 'Available',
+      actual_latitude: '',
+      actual_longitude: '',
     });
   };
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setNewResource(prev => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
   const handleLocationSelect = (lat, lng) => {
-    setNewResource(prev => ({
+    setFormData(prev => ({
       ...prev,
-      latitude: lat.toFixed(6),
-      longitude: lng.toFixed(6),
-      location: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+      actual_latitude: lat.toFixed(6),
+      actual_longitude: lng.toFixed(6),
     }));
     setOpenMap(false);
   };
 
-  const handleAddResource = () => {
-    const newResourceWithId = {
-      ...newResource,
-      id: resources.length + 1,
-      lastUpdate: new Date().toISOString()
-    };
+  // const handleAddResource = () => {
+  //   const newResourceWithId = {
+  //     ...newResource,
+  //     id: resources.length + 1,
+  //     lastUpdate: new Date().toISOString()
+  //   };
     
-    const updatedResources = [...resources, newResourceWithId];
-    setResources(updatedResources);
-    localStorage.setItem('resources', JSON.stringify(updatedResources));
-    handleModalClose();
+  //   const updatedResources = [...resources, newResourceWithId];
+  //   setResources(updatedResources);
+  //   localStorage.setItem('resources', JSON.stringify(updatedResources));
+  //   handleModalClose();
+  // };
+
+  const handleAddResource = (event) => {
+    event.preventDefault();
+    console.log("DEBUG - Inside the function")
+    // Crear nueva incidencia con ID único y fecha
+    const newResource = {
+      ...formData
+    };
+    console.log("DEBUG - Inside the function 2")
+    console.log(formData)
+    console.log(JSON.stringify(newResource))
+    const endpoint = APIProtocol + APIURL + '/api/devices'
+    fetch(endpoint, {
+      method: 'POST', // or 'PUT'
+      headers: {
+        // 'Accept': 'application/json',
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify(newResource),
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        console.log(
+          "Looks like there was a problem. Status Code: " + response.status
+        );
+        return;
+      }
+      console.log("Succesfully created new emergency")
+      fetchResources()
+      handleModalClose();
+    })
+    .catch(function(err) {
+      console.log("Error in Create new Emergency while creating emergency", err);
+      handleModalClose();
+    });
   };
 
   const handleRefresh = () => {
-    setIsLoading(true);
-    const storedResources = localStorage.getItem('resources');
-    if (storedResources) {
-      setResources(JSON.parse(storedResources));
-    }
-    setIsLoading(false);
+    fetchResources()
   };
 
   const handleSearchChange = (event) => {
@@ -211,17 +272,16 @@ const Resources = () => {
 
   const filteredResources = resources.filter(resource =>
     resource.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    resource.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    resource.location.toLowerCase().includes(searchTerm.toLowerCase())
+    resource.resource_type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'disponible':
+      case 'Available':
         return 'success';
-      case 'ocupado':
+      case 'Busy':
         return 'error';
-      case 'mantenimiento':
+      case 'Maintenance':
         return 'warning';
       default:
         return 'default';
@@ -240,7 +300,7 @@ const Resources = () => {
             startIcon={<AddIcon />}
             onClick={handleModalOpen}
           >
-            Nou Recurs
+            New Resource
           </Button>
           <Button
             variant="outlined"
@@ -253,7 +313,7 @@ const Resources = () => {
               }
             }}
           >
-            {isLoading ? 'Actualitzant...' : 'Actualitzar'}
+            {isLoading ? 'Updating...' : 'Update'}
           </Button>
         </Box>
       </Box>
@@ -265,40 +325,41 @@ const Resources = () => {
       >
         <Box sx={modalStyle}>
           <Typography id="modal-title" variant="h6" component="h2" sx={{ mb: 3 }}>
-            Afegir Nou Recurs
+            Add a new resource
           </Typography>
+          <form onSubmit={handleAddResource}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
               label="Nom"
               name="name"
-              value={newResource.name}
+              value={formData.name}
               onChange={handleInputChange}
             />
             <FormControl fullWidth>
               <InputLabel>Tipus</InputLabel>
               <Select
-                name="type"
-                value={newResource.type}
+                name="resource_type"
+                value={formData.resource_type}
                 label="Tipus"
                 onChange={handleInputChange}
               >
-                <MenuItem value="ambulancia">Ambulància</MenuItem>
-                <MenuItem value="policia">Policia</MenuItem>
-                <MenuItem value="bombero">Bomber</MenuItem>
+                <MenuItem value="Ambulance">Ambulance</MenuItem>
+                <MenuItem value="Police">Police</MenuItem>
+                <MenuItem value="Firetruck">Firetruck</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth>
-              <InputLabel>Estat</InputLabel>
+              <InputLabel>Status</InputLabel>
               <Select
                 name="status"
-                value={newResource.status}
-                label="Estat"
+                value={formData.status}
+                label="Status"
                 onChange={handleInputChange}
               >
-                <MenuItem value="disponible">Disponible</MenuItem>
-                <MenuItem value="ocupado">Ocupat</MenuItem>
-                <MenuItem value="mantenimiento">Manteniment</MenuItem>
+                <MenuItem value="Available">Available</MenuItem>
+                <MenuItem value="Busy">Busy</MenuItem>
+                <MenuItem value="Maintenance">Maintenance</MenuItem>
               </Select>
             </FormControl>
             <Button
@@ -307,13 +368,13 @@ const Resources = () => {
               startIcon={<LocationOnIcon />}
               onClick={() => setOpenMap(true)}
             >
-              Seleccionar Ubicació
+              Chose the location
             </Button>
             <TextField
               fullWidth
-              label="Latitud"
-              name="latitude"
-              value={newResource.latitude}
+              label="Latitude"
+              name="actual_latitude"
+              value={formData.actual_latitude}
               InputProps={{
                 readOnly: true,
               }}
@@ -321,13 +382,13 @@ const Resources = () => {
             <TextField
               fullWidth
               label="Longitud"
-              name="longitude"
-              value={newResource.longitude}
+              name="actual_longitude"
+              value={formData.actual_longitude}
               InputProps={{
                 readOnly: true,
               }}
             />
-            <TextField
+            {/* <TextField
               fullWidth
               label="Ubicació"
               name="location"
@@ -335,18 +396,19 @@ const Resources = () => {
               InputProps={{
                 readOnly: true,
               }}
-            />
+            /> */}
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
               <Button onClick={handleModalClose}>Cancel·lar</Button>
               <Button 
                 variant="contained" 
                 onClick={handleAddResource}
-                disabled={!newResource.name || !newResource.type || !newResource.location}
+                disabled={!formData.name || !formData.resource_type || !formData.actual_latitude || !formData.actual_longitude}
               >
-                Afegir
+                Create
               </Button>
             </Box>
           </Box>
+          </form>
         </Box>
       </Modal>
 
@@ -366,7 +428,7 @@ const Resources = () => {
           p: 4,
         }}>
           <Typography id="map-modal-title" variant="h6" component="h2" gutterBottom>
-            Selecciona una ubicació al mapa
+            Chose a location in the map
           </Typography>
           <Box sx={{ height: '500px', width: '100%' }}>
             <MapContainer
@@ -379,11 +441,16 @@ const Resources = () => {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
               <MapComponent onLocationSelect={handleLocationSelect} />
-              {resources.map((resource) => (
+              {resources
+              .filter(resource => resource.location_resource_data.latitude != null && resource.location_resource_data.longitude != null)
+              .map((resource) => (
                 <Marker
                   key={resource.id}
-                  position={[resource.latitude, resource.longitude]}
-                  icon={resourceIcons[resource.type] || resourceIcons.ambulancia}
+                  position={[
+                    parseFloat(resource.location_resource_data.latitude), 
+                    parseFloat(resource.location_resource_data.longitude)
+                  ]}
+                  icon={resourceIcons[resource.resource_type] || resourceIcons.ambulancia}
                 >
                   <Popup>
                     <Box sx={{ p: 1 }}>
@@ -391,11 +458,11 @@ const Resources = () => {
                         {resource.name}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Tipus: {resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}
+                        Tipus: {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                         <Typography variant="caption" sx={{ mr: 1 }}>
-                          Estat:
+                          State:
                         </Typography>
                         <Chip
                           size="small"
@@ -409,7 +476,7 @@ const Resources = () => {
                         />
                       </Box>
                       <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                        Última actualització: {new Date(resource.lastUpdate).toLocaleString()}
+                        Last Update: {new Date(resource.time_updated ? resource.time_updated : resource.time_created).toLocaleString()}
                       </Typography>
                     </Box>
                   </Popup>
@@ -439,7 +506,7 @@ const Resources = () => {
               <Card>
                 <CardHeader
                   title={resource.name}
-                  subheader={`Tipus: ${resource.type}`}
+                  subheader={`Type: ${resource.resource_type}`}
                   action={
                     <Chip
                       label={resource.status}
@@ -450,10 +517,10 @@ const Resources = () => {
                 />
                 <CardContent sx={{ position: 'relative', pb: '16px !important' }}>
                   <Typography variant="body2" color="text.secondary">
-                    Ubicació: {resource.location}
+                   Lat: {resource.location_resource_data.latitude} Long: {resource.location_resource_data.longitude}
                   </Typography>
                   <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    Última actualització: {new Date(resource.lastUpdate).toLocaleString()}
+                    Last Update: {new Date(resource.time_updated ? resource.time_updated : resource.time_created).toLocaleString()}
                   </Typography>
                   <Box sx={{ 
                     position: 'absolute',
@@ -462,14 +529,16 @@ const Resources = () => {
                   }}>
                     <img 
                       src={`${process.env.PUBLIC_URL}/resources/${
-                           resource.type === 'ambulancia' ? 'Ambulancia.png' : 
-                           resource.type === 'policia' ? 'Policia.png' : 
-                           resource.type === 'bombero' ? 'Bomberos.png' : ''}`}
+                           resource.resource_type === 'Ambulance' ? 'Ambulancia.png' : 
+                           resource.resource_type === 'Police' ? 'Policia.png' : 
+                           resource.resource_type === 'Firetruck' ? 'Bomberos.png' :
+                           resource.resource_type === 'Unknown' ? 'Question.png' : '' 
+                          }`}
                       alt={`Icono de ${resource.type}`}
                       style={{ width: '40px', height: '40px', objectFit: 'contain' }}
                       onError={(e) => {
                         console.error('Error loading image:', e.target.src);
-                        console.log('Resource type:', resource.type);
+                        console.log('Resource type:', resource.resource_type);
                       }}
                     />
                   </Box>

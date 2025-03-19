@@ -14,8 +14,6 @@ from src.configs.config import settings
 settings
 
 
-
-
 # Configuración de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +23,7 @@ app = FastAPI(title="SERP Backend API")
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://192.168.122.174:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,13 +41,16 @@ app.include_router(resources.router)
 # Config DB
 from src.configs.DBSessionManager import sessionmanager
 
+
 #Seed DB
 from src.seeders.main import seed_db
 @app.on_event("startup")
 async def startup_event():
     # Initialize the DatabaseSessionManager
+    # await sessionmanager.close() 
+    await sessionmanager.create_db_and_tables()
     # sessionmanager.init_db()
-    await seed_db()
+    # await seed_db()
 
 
 @app.on_event("shutdown")

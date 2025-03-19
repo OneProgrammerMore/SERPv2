@@ -1,8 +1,8 @@
 """First migration
 
-Revision ID: c1617e32de9c
+Revision ID: 845d5c70eaf2
 Revises: 
-Create Date: 2025-03-04 00:31:17.915927
+Create Date: 2025-03-18 16:06:15.750758
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'c1617e32de9c'
+revision: str = '845d5c70eaf2'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -40,8 +40,8 @@ def upgrade() -> None:
     op.create_index(op.f('ix_address_id'), 'address', ['id'], unique=False)
     op.create_table('location',
     sa.Column('id', sa.Uuid(), nullable=False),
-    sa.Column('latitude', sa.Float(), nullable=False),
-    sa.Column('longitude', sa.Float(), nullable=False),
+    sa.Column('latitude', sa.Float(), nullable=True),
+    sa.Column('longitude', sa.Float(), nullable=True),
     sa.Column('accuracy', sa.Float(), nullable=True),
     sa.Column('speed', sa.Float(), nullable=True),
     sa.Column('heading', sa.Float(), nullable=True),
@@ -61,15 +61,16 @@ def upgrade() -> None:
     op.create_index(op.f('ix_user_id'), 'user', ['id'], unique=False)
     op.create_table('resource',
     sa.Column('id', sa.Uuid(), nullable=False),
-    sa.Column('resource_type', sa.String(length=128), nullable=False),
+    sa.Column('name', sa.String(length=128), nullable=False),
+    sa.Column('resource_type', sa.Enum('UNKNOWN', 'AMBULANCE', 'POLICE', 'FIRETRUCK', name='resourcetypeenum'), nullable=True),
     sa.Column('actual_address', sa.Uuid(), nullable=True),
     sa.Column('actual_location', sa.Uuid(), nullable=True),
     sa.Column('normal_address', sa.Uuid(), nullable=True),
     sa.Column('normal_location', sa.Uuid(), nullable=True),
-    sa.Column('status', sa.Enum('UNKNOWN', 'ACTIVE', 'INACTIVE', 'RESTING', 'AVAILABLE', name='resourcestatusenum'), nullable=True),
-    sa.Column('responsible', sa.String(length=128), nullable=False),
-    sa.Column('telephone', sa.String(length=128), nullable=False),
-    sa.Column('email', sa.String(length=128), nullable=False),
+    sa.Column('status', sa.Enum('UNKNOWN', 'AVAILABLE', 'BUSY', 'MAINTENANCE', name='resourcestatusenum'), nullable=True),
+    sa.Column('responsible', sa.String(length=128), nullable=True),
+    sa.Column('telephone', sa.String(length=128), nullable=True),
+    sa.Column('email', sa.String(length=128), nullable=True),
     sa.Column('time_created', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('time_updated', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['actual_address'], ['address.id'], ondelete='SET NULL'),
@@ -83,9 +84,9 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sa.String(length=64), nullable=False),
     sa.Column('description', sa.String(length=512), nullable=False),
-    sa.Column('priority', sa.Enum('Alta', 'Mitjana', 'Baixa', name='prioritytype'), nullable=True),
-    sa.Column('emergency_type', sa.Enum('Incendi', 'Emergencia_Medica', 'Accident', 'Desastre_Natural', 'Altres', name='emergencytype'), nullable=True),
-    sa.Column('status', sa.Enum('Active', 'Solved', 'Archived', name='statustype'), nullable=True),
+    sa.Column('priority', sa.Enum('CRITICAL', 'HIGH', 'MEDIUM', 'LOW', name='prioritytype'), nullable=True),
+    sa.Column('emergency_type', sa.Enum('FIRE', 'MEDICAL', 'ACCIDENT', 'NATURAL_DISASTER', 'OTHER', name='emergencytype'), nullable=True),
+    sa.Column('status', sa.Enum('ACTIVE', 'PENDING', 'SOLVED', 'ARCHIVED', name='statustype'), nullable=True),
     sa.Column('location_emergency', sa.Uuid(), nullable=True),
     sa.Column('address_emergency', sa.Uuid(), nullable=True),
     sa.Column('resource_id', sa.Uuid(), nullable=True),

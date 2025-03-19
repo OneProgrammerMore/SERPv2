@@ -38,6 +38,10 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+import {APIURL, APIProtocol} from "../../constants.js"
+
+
+
 // Función para convertir un componente SVG a URL de datos
 const svgToDataUrl = (IconComponent, color = '#FF0000') => {
   const svg = `
@@ -101,11 +105,11 @@ const resourceIcons = {
 // Función para obtener el color del estado del recurso
 const getResourceStatusColor = (status) => {
   switch (status) {
-    case 'disponible':
+    case 'Available':
       return '#4CAF50';
-    case 'ocupado':
+    case 'Busy':
       return '#FF4444';
-    case 'mantenimiento':
+    case 'Maintenace':
       return '#FFA000';
     default:
       return '#757575';
@@ -115,11 +119,11 @@ const getResourceStatusColor = (status) => {
 // Función para obtener el texto del estado del recurso
 const getResourceStatusText = (status) => {
   switch (status) {
-    case 'disponible':
+    case 'Available':
       return 'Disponible';
-    case 'ocupado':
+    case 'Busy':
       return 'Ocupado';
-    case 'mantenimiento':
+    case 'Maintenace':
       return 'Mantenimiento';
     default:
       return status;
@@ -178,6 +182,7 @@ const Dashboard = () => {
   const [resources, setResources] = useState([]);
 
   // Cargar y sincronizar datos desde localStorage
+  {/*
   useEffect(() => {
     const loadData = () => {
       setIsLoading(true);
@@ -226,32 +231,95 @@ const Dashboard = () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+  */}
+
+  const fetchEmergencies = ()  => {
+    const endpoint = APIProtocol + APIURL + '/api/alerts'
+    fetch(endpoint, {
+      method: 'GET', // or 'PUT'
+      headers: {
+        'Accept': 'application/json',
+      }
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        console.log(
+          "Looks like there was a problem. Status Code: " + response.status
+        );
+        return;
+      }
+      response.json().then(function(data) {
+        setEmergencies(data)
+        console.log(data)
+        setIsLoading(false);
+      });
+    })
+    .catch(function(err) {
+      console.log("Error in Dashboard while fetching emergencies", err);
+    });
+  }
+  const fetchResources = ()  => {
+    const endpoint = APIProtocol + APIURL + '/api/devices'
+    fetch(endpoint, {
+      method: 'GET', // or 'PUT'
+      headers: {
+        'Accept': 'application/json',
+      }
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        console.log(
+          "Looks like there was a problem. Status Code: " + response.status
+        );
+        return;
+      }
+      response.json().then(function(data) {
+        setResources(data)
+        console.log(data)
+        setIsLoading(false);
+      });
+    })
+    .catch(function(err) {
+      console.log("Error in Dashboard while fetching emergencies", err);
+    });
+  }
+
+
+  useEffect(() => {
+    fetchEmergencies()
+    const idEmergencies = setInterval(() => (
+      fetchEmergencies()
+    ), 100000);
+    fetchResources()
+    const idResources = setInterval(() => (
+      fetchResources()
+    ), 100000);
+    return () => clearInterval(idEmergencies), clearInterval(idResources) ;  
+  }, []);
+  
+
+
+
 
   // Filtrar emergencias por búsqueda
   const filteredEmergencies = emergencies.filter(emergency => 
     emergency.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emergency.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //emergency.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emergency.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   // Estadísticas
-  const activeEmergencies = emergencies.filter(e => e.status === 'active').length;
-  const pendingEmergencies = emergencies.filter(e => e.status === 'pending').length;
-  const resolvedEmergencies = emergencies.filter(e => e.status === 'resolved').length;
+  const activeEmergencies = emergencies.filter(e => e.status === 'Active').length;
+  const pendingEmergencies = emergencies.filter(e => e.status === 'Pending').length;
+  const solvedEmergencies = emergencies.filter(e => e.status === 'Solved').length;
   const totalResources = resources.length;
-  const availableResources = resources.filter(r => r.status === 'disponible').length;
-  const busyResources = resources.filter(r => r.status === 'ocupado').length;
-  const maintenanceResources = resources.filter(r => r.status === 'mantenimiento').length;
+  const availableResources = resources.filter(r => r.status === 'Available').length;
+  const busyResources = resources.filter(r => r.status === 'Busy').length;
+  const maintenanceResources = resources.filter(r => r.status === 'Maintenance').length;
   
   const handleRefresh = () => {
-    const savedIncidents = localStorage.getItem('incidents');
-    if (savedIncidents) {
-      setEmergencies(JSON.parse(savedIncidents));
-    }
-    const savedResources = localStorage.getItem('resources');
-    if (savedResources) {
-      setResources(JSON.parse(savedResources));
-    }
+    fetchEmergencies()
+    fetchResources()
   };
   
   const handleTabChange = (event, newValue) => {
@@ -270,7 +338,7 @@ const Dashboard = () => {
     <Box sx={{ flexGrow: 1 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Tauler Principal del Centre d'Emergències
+          Control Central Main Panel
         </Typography>
         <Button 
           startIcon={<RefreshIcon />} 
@@ -278,7 +346,7 @@ const Dashboard = () => {
           onClick={handleRefresh}
           disabled={isLoading}
         >
-          Actualitzar
+          Update
         </Button>
       </Box>
       
@@ -286,22 +354,22 @@ const Dashboard = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={2}>
           <StatPanel 
-            title="Emergències Actives" 
+            title="Active Emergencies" 
             value={activeEmergencies} 
             color="error.main" 
           />
         </Grid>
         <Grid item xs={12} sm={6} md={2}>
           <StatPanel 
-            title="Emergències Pendents" 
+            title="Pending Emergencies" 
             value={pendingEmergencies} 
             color="warning.main" 
           />
         </Grid>
         <Grid item xs={12} sm={6} md={2}>
           <StatPanel 
-            title="Emergències Resoltes" 
-            value={resolvedEmergencies} 
+            title="Solved Emergencies" 
+            value={solvedEmergencies} 
             color="success.main" 
           />
         </Grid>
@@ -309,8 +377,7 @@ const Dashboard = () => {
           <StatPanel 
             title={
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <span>Recursos</span>
-                <span>Totals</span>
+                <span>Total Resources </span>
               </Box>
             }
             value={totalResources} 
@@ -319,14 +386,14 @@ const Dashboard = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={2}>
           <StatPanel 
-            title="Recursos Disponibles" 
+            title="Available Resources" 
             value={availableResources} 
             color="success.main" 
           />
         </Grid>
         <Grid item xs={12} sm={6} md={2}>
           <StatPanel 
-            title="Recursos Ocupats" 
+            title="Busy Resources" 
             value={busyResources} 
             color="error.main" 
           />
@@ -337,14 +404,14 @@ const Dashboard = () => {
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1 }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
-            <Tab label="Emergències" />
-            <Tab label="Recursos" />
+            <Tab label="Emergencies" />
+            <Tab label="Resources" />
           </Tabs>
           
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <TextField
               size="small"
-              placeholder="Cercar..."
+              placeholder="Search..."
               variant="outlined"
               value={searchTerm}
               onChange={handleSearchChange}
@@ -362,7 +429,7 @@ const Dashboard = () => {
             
             <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
             
-            <Tooltip title="Vista de mapa">
+            <Tooltip title="Map View">
               <IconButton 
                 color={currentView === 'map' ? 'primary' : 'default'} 
                 onClick={() => handleViewChange('map')}
@@ -402,7 +469,7 @@ const Dashboard = () => {
                   {filteredEmergencies.map(emergency => (
                     <Marker 
                       key={emergency.id} 
-                      position={[emergency.latitude, emergency.longitude]}
+                      position={[emergency.location_emergency_data.latitude, emergency.location_emergency_data.longitude]}
                       icon={emergencyIcons[emergency.type] || emergencyIcons.other}
                     >
                       <Popup>
@@ -412,8 +479,8 @@ const Dashboard = () => {
                           Estat: 
                           <Chip 
                             size="small" 
-                            label={emergency.status === 'active' ? 'Activa' : emergency.status === 'pending' ? 'Pendent' : 'Resolta'} 
-                            color={emergency.status === 'active' ? 'error' : emergency.status === 'pending' ? 'warning' : 'success'} 
+                            label={emergency.status === 'Active' ? 'Active' : emergency.status === 'pending' ? 'Pendent' : 'Resolta'} 
+                            color={emergency.status === 'Active' ? 'error' : emergency.status === 'pending' ? 'warning' : 'success'} 
                             sx={{ ml: 1 }}
                           />
                         </Typography>
@@ -429,29 +496,29 @@ const Dashboard = () => {
               <Box>
                 {filteredEmergencies.length === 0 ? (
                   <Typography align="center" color="textSecondary" sx={{ py: 3 }}>
-                    No s'han trobat emergències
+                    No found emergencies
                   </Typography>
                 ) : (
                   <>
                     {/* Título para emergencias activas y pendientes */}
                     <Typography variant="h6" color="textSecondary" sx={{ mb: 2 }}>
-                      Emergències Actives
+                      Active Emergencies
                     </Typography>
 
                     {/* Emergencias activas y pendientes */}
                     <Grid container spacing={2} sx={{ mb: 4 }}>
                       {filteredEmergencies
-                        .filter(emergency => emergency.status !== 'resolved')
+                        .filter(emergency => emergency.status !== 'solved')
                         .map(emergency => (
                           <Grid item xs={12} key={emergency.id}>
                             <Card variant="outlined">
                               <CardHeader
                                 title={emergency.title}
-                                subheader={`Ubicació: ${emergency.location}`}
+                                subheader={`Location: Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}`}
                                 action={
                                   <Chip 
-                                    label={emergency.status === 'active' ? 'Activa' : 'Pendent'} 
-                                    color={emergency.status === 'active' ? 'error' : 'warning'} 
+                                    label={emergency.status}
+                                    color={emergency.status === 'Active' ? 'error' : 'warning'} 
                                   />
                                 }
                               />
@@ -470,7 +537,7 @@ const Dashboard = () => {
                       <>
                         <Divider sx={{ my: 3 }} />
                         <Typography variant="h6" color="textSecondary" sx={{ mb: 2 }}>
-                          Emergències Resoltes
+                          Solved Emergencies
                         </Typography>
                       </>
                     )}
@@ -490,7 +557,7 @@ const Dashboard = () => {
                                 }
                                 subheader={
                                   <Typography variant="caption">
-                                    {`Ubicació: ${emergency.location}`}
+                                    {`Location: Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}`}
                                   </Typography>
                                 }
                                 action={
@@ -520,7 +587,7 @@ const Dashboard = () => {
               <Box>
                 {resources.length === 0 ? (
                   <Typography align="center" color="textSecondary" sx={{ py: 3 }}>
-                    No s'han trobat recursos
+                    No resources found
                   </Typography>
                 ) : currentView === 'map' ? (
                   <Box sx={{ height: 600 }}>
@@ -530,15 +597,15 @@ const Dashboard = () => {
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                       />
                       {resources
-                        .filter(resource => resource.latitude != null && resource.longitude != null)
+                        .filter(resource => resource.location_resource_data.latitude != null && resource.location_resource_data.longitude != null)
                         .map(resource => (
                           <Marker 
                             key={resource.id} 
                             position={[
-                              parseFloat(resource.latitude), 
-                              parseFloat(resource.longitude)
+                              parseFloat(resource.location_resource_data.latitude), 
+                              parseFloat(resource.location_resource_data.longitude)
                             ]}
-                            icon={resourceIcons[resource.type] || resourceIcons.equipment}
+                            icon={resourceIcons[resource.resource_type] || resourceIcons.equipment}
                           >
                             <Popup>
                               <Box sx={{ p: 1 }}>
@@ -546,11 +613,11 @@ const Dashboard = () => {
                                   {resource.name}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                                  Tipus: {resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}
+                                  Type: {resource.resource_type.charAt(0).toUpperCase() + resource.resource_type.slice(1)}
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                   <Typography variant="caption" sx={{ mr: 1 }}>
-                                    Estat:
+                                    State:
                                   </Typography>
                                   <Chip 
                                     size="small" 
@@ -565,11 +632,11 @@ const Dashboard = () => {
                                   />
                                 </Box>
                                 <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                                  Última actualització: {new Date(resource.lastUpdate).toLocaleString()}
+                                  Last Update: {new Date(resource.time_updated ? resource.time_updated : resource.time_created).toLocaleString()}
                                 </Typography>
-                                {resource.location && (
+                                {resource.location_resource_data && (
                                   <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                                    Ubicació: {resource.location}
+                                    {`Location: Lat: ${resource.location_resource_data.latitude} Long: ${resource.location_resource_data.longitude}`}
                                   </Typography>
                                 )}
                               </Box>
@@ -585,7 +652,7 @@ const Dashboard = () => {
                         <Card>
                           <CardHeader
                             title={resource.name}
-                            subheader={`Tipus: ${resource.type}`}
+                            subheader={`Type: ${resource.resource_type}`}
                             action={
                               <Chip
                                 label={resource.status}
@@ -597,10 +664,10 @@ const Dashboard = () => {
                           />
                           <CardContent>
                             <Typography variant="body2" color="text.secondary">
-                              Ubicació: {resource.location}
+                              {`Location: Lat: ${resource.location_resource_data.latitude} Long: ${resource.location_resource_data.longitude}`}
                             </Typography>
                             <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                              Última actualització: {new Date(resource.lastUpdate).toLocaleString()}
+                             Last Update: {new Date(resource.time_updated ? resource.time_updated : resource.time_created).toLocaleString()}
                             </Typography>
                           </CardContent>
                         </Card>

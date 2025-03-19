@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import sessionmaker
 from contextvars import ContextVar
 
+from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
+
 from src.configs.config import settings
 
 # Define a context variable to store the current task
@@ -33,6 +35,9 @@ class DatabaseSessionManager:
             autocommit=False,
             expire_on_commit=False
         )
+    
+    async def create_db_and_tables(self):
+        SQLModel.metadata.create_all(self.engine)
 
     async def close(self):
         """Close the database engine."""
