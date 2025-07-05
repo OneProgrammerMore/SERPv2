@@ -76,27 +76,27 @@ const MainLayout = () => {
     // Elementos básicos que todos los roles pueden ver
     const basicItems = [
       {
-        text: 'Tauler Principal',
+        text: 'Main Panel',
         icon: <DashboardIcon />,
         path: '/dashboard'
       },
       {
-        text: 'Nova Emergència',
+        text: 'New Emergency',
         icon: <AddIcon />,
-        path: '/emergencies/nova'
+        path: '/emergency/new'
       },
       {
-        text: 'Editor d\'Incidents',
+        text: 'Emergency Editor',
         icon: <EditIcon />,
-        path: '/emergencies/editor'
+        path: '/emergency/editor'
       },
       {
-        text: 'Seguiment',
+        text: 'Tracking',
         icon: <AssignmentIcon />,
-        path: '/emergencies/seguiment'
+        path: '/emergency/tracking'
       },
       {
-        text: 'Recursos',
+        text: 'Resources',
         icon: <ResourcesIcon />,
         path: '/devices/resources'
       }
@@ -105,15 +105,15 @@ const MainLayout = () => {
     // Elementos adicionales según el rol
     const adminItems = [
       {
-        text: 'Gestió Usuaris',
+        text: 'User adminitration',
         icon: <PeopleIcon />,
-        path: '/usuaris'
+        path: '/users'
       }
     ];
 
     const resourceItems = [
       {
-        text: 'El Meu Dispositiu',
+        text: 'My Device',
         icon: <LocationIcon />,
         path: '/my-device'
       }
@@ -123,7 +123,8 @@ const MainLayout = () => {
     if (user?.role === 'emergency_center') {
       return [...basicItems, ...adminItems];
     } else if (user?.role === 'resource_personnel') {
-      return [...basicItems, ...resourceItems];
+      // return [...basicItems, ...resourceItems];
+      return [...basicItems];
     } else if (user?.role === 'emergency_operator') {
       return basicItems;
     }

@@ -31,19 +31,23 @@ import {
 } from '@mui/icons-material';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import { fetchResources } from '../../redux/slices/resourcesSlice';
+import { getBatteryStatus } from '../../redux/slices/batterySlice';
 import { fetchEmergencies } from '../../redux/slices/emergenciesSlice';
 import { useAuth } from '../../context/AuthContext';
+
+
 
 const ResourcePersonnelDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useAuth();
   const [loadingResource, setLoadingResource] = useState(true);
-  
+
   // Obtener los recursos y emergencias del estado
   const resources = useSelector(state => state.resources.resources);
   const resourcesStatus = useSelector(state => state.resources.status);
   const emergencies = useSelector(state => state.emergencies.emergencies);
   const emergenciesStatus = useSelector(state => state.emergencies.status);
+  const batteryLevel = useSelector((state) => state.battery.level);
   
   // Estado para simular la calidad de señal
   const [qosStatus, setQosStatus] = useState({
@@ -52,6 +56,7 @@ const ResourcePersonnelDashboard = () => {
     lastUpdated: new Date().toISOString()
   });
   
+  /*
   // Simular que cambia la calidad de la señal periódicamente
   useEffect(() => {
     const interval = setInterval(() => {
@@ -67,11 +72,15 @@ const ResourcePersonnelDashboard = () => {
     }, 30000); // Cada 30 segundos
     
     return () => clearInterval(interval);
-  }, [qosStatus]);
+  }, [qosStatus]);*/
   
+
+
   // Encontrar el recurso asignado a este usuario
-  const myResource = resources.find(r => r.userId === user?.id);
-  
+  //const myResource = resources.find(r => r.userId === user?.id);
+  const myResource = Array.isArray(resources) && user 
+    ? resources.find(r => r.userId === user.id) 
+    : null;
   // Encontrar la emergencia asignada a este recurso
   const myEmergency = myResource?.emergencyId 
     ? emergencies.find(e => e.id === myResource.emergencyId)
@@ -81,6 +90,7 @@ const ResourcePersonnelDashboard = () => {
     // Cargar recursos y emergencias
     dispatch(fetchResources());
     dispatch(fetchEmergencies());
+    dispatch(getBatteryStatus());
     
     // Simular tiempo de carga para el recurso
     const timer = setTimeout(() => {
@@ -91,10 +101,13 @@ const ResourcePersonnelDashboard = () => {
   }, [dispatch]);
   
   const handleRefresh = () => {
+
     setLoadingResource(true);
+
     dispatch(fetchResources());
     dispatch(fetchEmergencies());
-    
+    dispatch(getBatteryStatus());
+
     // Simular tiempo de carga
     setTimeout(() => {
       setLoadingResource(false);
@@ -116,6 +129,8 @@ const ResourcePersonnelDashboard = () => {
         
     return <SignalIcon color={color} />;
   };
+ 
+
   
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -181,8 +196,9 @@ const ResourcePersonnelDashboard = () => {
                     <BatteryIcon color={qosStatus.battery > 20 ? 'success' : 'error'} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary="Bateria" 
-                    secondary={`${qosStatus.battery}%`} 
+                    primary="Battery"
+                    //secondary={`${qosStatus.battery}%`} 
+                    secondary={ batteryLevel !== null ? `${batteryLevel }%` : 'N/A'} 
                   />
                 </ListItem>
                 

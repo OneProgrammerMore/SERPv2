@@ -78,8 +78,8 @@ function App() {
           } />
           
           {/* Rutas de Emergencias */}
-          <Route path="emergencies">
-            <Route path="nova" element={
+          <Route path="emergency">
+            <Route path="new" element={
               <ProtectedRoute>
                 <NovaEmergencia />
               </ProtectedRoute>
@@ -89,7 +89,7 @@ function App() {
                 <EditorIncidents />
               </ProtectedRoute>
             } />
-            <Route path="seguiment" element={
+            <Route path="tracking" element={
               <ProtectedRoute>
                 <Seguiment />
               </ProtectedRoute>
@@ -106,7 +106,7 @@ function App() {
           </Route>
           
           {/* Gestión de Usuarios */}
-          <Route path="usuaris" element={
+          <Route path="users" element={
             <ProtectedRoute>
               <GestioUsuaris />
             </ProtectedRoute>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { 
   Grid, 
   Paper, 
@@ -38,8 +39,8 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import {APIURL, APIProtocol} from "../../constants.js"
-
+import { fetchResources } from '../../redux/slices/resourcesSlice';
+import { fetchEmergencies } from '../../redux/slices/emergenciesSlice';
 
 
 // Función para convertir un componente SVG a URL de datos
@@ -172,137 +173,38 @@ const StatPanel = ({ title, value, color }) => (
 
 // Componente de dashboard
 const Dashboard = () => {
+
+  const dispatch = useDispatch();
+
   const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentView, setCurrentView] = useState('list');
   const [isLoading, setIsLoading] = useState(true);
   
-  // Estados para los datos
-  const [emergencies, setEmergencies] = useState([]);
-  const [resources, setResources] = useState([]);
+  const emergencies = useSelector((state) => state.emergencies?.emergencies || []);
+  const resources = useSelector((state) => state.resources?.resources || []);
 
-  // Cargar y sincronizar datos desde localStorage
-  {/*
-  useEffect(() => {
-    const loadData = () => {
-      setIsLoading(true);
-      try {
-        // Cargar emergencias
-        const savedIncidents = localStorage.getItem('incidents');
-        if (savedIncidents) {
-          setEmergencies(JSON.parse(savedIncidents));
-        }
-        
-        // Cargar recursos
-        const savedResources = localStorage.getItem('resources');
-        if (savedResources) {
-          setResources(JSON.parse(savedResources));
-        }
-      } catch (error) {
-        console.error('Error al cargar datos:', error);
-      }
-      setIsLoading(false);
-    };
-
-    // Cargar datos inicialmente
-    loadData();
-
-    // Escuchar cambios en localStorage
-    const handleStorageChange = (e) => {
-      if (e.key === 'incidents') {
-        const savedIncidents = localStorage.getItem('incidents');
-        if (savedIncidents) {
-          setEmergencies(JSON.parse(savedIncidents));
-        }
-      }
-      if (e.key === 'resources') {
-        const savedResources = localStorage.getItem('resources');
-        if (savedResources) {
-          setResources(JSON.parse(savedResources));
-        }
-      }
-    };
-
-    // Suscribirse a cambios en localStorage
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-  */}
-
-  const fetchEmergencies = ()  => {
-    const endpoint = APIProtocol + APIURL + '/api/alerts'
-    fetch(endpoint, {
-      method: 'GET', // or 'PUT'
-      headers: {
-        'Accept': 'application/json',
-      }
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      response.json().then(function(data) {
-        setEmergencies(data)
-        console.log(data)
-        setIsLoading(false);
-      });
-    })
-    .catch(function(err) {
-      console.log("Error in Dashboard while fetching emergencies", err);
-    });
-  }
-  const fetchResources = ()  => {
-    const endpoint = APIProtocol + APIURL + '/api/devices'
-    fetch(endpoint, {
-      method: 'GET', // or 'PUT'
-      headers: {
-        'Accept': 'application/json',
-      }
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      response.json().then(function(data) {
-        setResources(data)
-        console.log(data)
-        setIsLoading(false);
-      });
-    })
-    .catch(function(err) {
-      console.log("Error in Dashboard while fetching emergencies", err);
-    });
-  }
 
 
   useEffect(() => {
-    fetchEmergencies()
+    setIsLoading(true)
+    dispatch(fetchEmergencies())
     const idEmergencies = setInterval(() => (
-      fetchEmergencies()
+      dispatch(fetchEmergencies())
     ), 100000);
-    fetchResources()
+    dispatch(fetchResources())
     const idResources = setInterval(() => (
-      fetchResources()
+      dispatch(fetchResources())
     ), 100000);
+    setIsLoading(false)
     return () => clearInterval(idEmergencies), clearInterval(idResources) ;  
   }, []);
   
 
 
 
-
   // Filtrar emergencias por búsqueda
-  const filteredEmergencies = emergencies.filter(emergency => 
+  const filteredEmergencies =  emergencies.filter(emergency => 
     emergency.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     //emergency.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emergency.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -317,9 +219,11 @@ const Dashboard = () => {
   const busyResources = resources.filter(r => r.status === 'Busy').length;
   const maintenanceResources = resources.filter(r => r.status === 'Maintenance').length;
   
+  
   const handleRefresh = () => {
-    fetchEmergencies()
-    fetchResources()
+    dispatch(fetchEmergencies())
+    dispatch(fetchResources())
+    setIsLoading(false)
   };
   
   const handleTabChange = (event, newValue) => {
@@ -513,7 +417,7 @@ const Dashboard = () => {
                           <Grid item xs={12} key={emergency.id}>
                             <Card variant="outlined">
                               <CardHeader
-                                title={emergency.title}
+                                title={emergency.name}
                                 subheader={`Location: Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}`}
                                 action={
                                   <Chip 
@@ -525,6 +429,12 @@ const Dashboard = () => {
                               <CardContent>
                                 <Typography variant="body2" color="textSecondary">
                                   {emergency.description}
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary">
+                                  <b> Created At: </b> {new Date(emergency.time_created ? emergency.time_created : emergency.time_created).toLocaleString()}
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary">
+                                  <b> Updated At:</b> {new Date(emergency.time_updated ? emergency.time_updated : emergency.time_updated).toLocaleString()}
                                 </Typography>
                               </CardContent>
                             </Card>

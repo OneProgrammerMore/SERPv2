@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { 
   Box, 
   Typography, 
@@ -18,7 +19,8 @@ import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useNavigate } from 'react-router-dom';
-import {APIURL, APIProtocol} from "../../constants.js"
+
+import { createEmergency } from '../../redux/slices/emergenciesSlice';
 
 const MapComponent = ({ onLocationSelect }) => {
   useMapEvents({
@@ -32,27 +34,19 @@ const MapComponent = ({ onLocationSelect }) => {
 
 const NovaEmergencia = () => {
   const navigate = useNavigate();
-  // const [resources, setResources] = useState([]);
+  const dispatch = useDispatch();
+
   const [formData, setFormData] = React.useState({
     name: '',
     description: '',
-    // location: '',
     emergency_type: 'Other',
     priority: 'High',
     latitude: '',
     longitude: '',
-    // selectedResource: ''
   });
 
   const [openMap, setOpenMap] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
-
-  useEffect(() => {
-    // Cargar recursos disponibles
-    const storedResources = JSON.parse(localStorage.getItem('resources') || '[]');
-    const availableResources = storedResources.filter(resource => resource.status === 'disponible');
-    // setResources(availableResources);
-  }, []);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -67,111 +61,47 @@ const NovaEmergencia = () => {
       ...prevState,
       latitude: lat.toFixed(6),
       longitude: lng.toFixed(6),
-      // location: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
     }));
     setOpenMap(false);
   };
 
-  // const handleSubmit = (event) => {
-  //   event.preventDefault();
-    
-  //   // Crear nueva incidencia con ID único y fecha
-  //   const newIncident = {
-  //     ...formData,
-  //     id: Date.now(),
-  //     status: 'active',
-  //     lastUpdate: new Date().toISOString()
-  //   };
-
-  //   // Obtener incidencias existentes del LocalStorage
-  //   const existingIncidents = JSON.parse(localStorage.getItem('incidents') || '[]');
-    
-  //   // Añadir nueva incidencia
-  //   const updatedIncidents = [...existingIncidents, newIncident];
-    
-  //   // Actualizar el estado del recurso seleccionado
-  //   if (formData.selectedResource) {
-  //     const storedResources = JSON.parse(localStorage.getItem('resources') || '[]');
-  //     const updatedResources = storedResources.map(resource => {
-  //       if (resource.id === parseInt(formData.selectedResource)) {
-  //         return { ...resource, status: 'ocupado' };
-  //       }
-  //       return resource;
-  //     });
-  //     localStorage.setItem('resources', JSON.stringify(updatedResources));
-  //   }
-    
-  //   // Guardar en LocalStorage
-  //   localStorage.setItem('incidents', JSON.stringify(updatedIncidents));
-
-  //   // Mostrar mensaje de éxito y limpiar el formulario
-  //   setShowSuccess(true);
-  //   setFormData({
-  //     title: '',
-  //     description: '',
-  //     location: '',
-  //     type: '',
-  //     priority: '',
-  //     latitude: '',
-  //     longitude: '',
-  //     selectedResource: ''
-  //   });
-
-  //   // Ocultar el mensaje después de 3 segundos
-  //   setTimeout(() => {
-  //     setShowSuccess(false);
-  //   }, 3000);
-  // };
-
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log("DEBUG - Inside the function")
+    
     // Crear nueva incidencia con ID único y fecha
     const newIncident = {
       ...formData,
       status: 'Active',
     };
-    console.log("DEBUG - Inside the function 2")
-    console.log(newIncident)
-    console.log(JSON.stringify(newIncident))
-    const endpoint = APIProtocol + APIURL + '/api/alerts'
-    fetch(endpoint, {
-      method: 'POST', // or 'PUT'
-      headers: {
-        // 'Accept': 'application/json',
-        "Content-type": "application/json"
-      },
-      body: JSON.stringify(newIncident),
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        
-        return;
+    
+    try {
+
+      const resultAction = await dispatch(createEmergency(newIncident));
+      
+      if (resultAction.payload.ok) {
+        console.log('Submitted successfully:', resultAction.payload);
+
+        setShowSuccess(true);
+        setFormData({
+          name: '',
+          description: '',
+          location: '',
+          emergency_type: 'Other',
+          priority: 'High',
+          latitude: '',
+          longitude: '',
+        });
+        // Ocultar el mensaje después de 3 segundos
+        setTimeout(() => {
+          setShowSuccess(false);
+        }, 3000);
+
+      } else {
+        console.error('Submission failed:', resultAction.payload);
       }
-      console.log("Succesfully created new emergency")
-      // Mostrar mensaje de éxito y limpiar el formulario
-      setShowSuccess(true);
-      setFormData({
-        name: '',
-        description: '',
-        location: '',
-        emergency_type: 'Other',
-        priority: 'High',
-        latitude: '',
-        longitude: '',
-        // selectedResource: ''
-      });
-      // Ocultar el mensaje después de 3 segundos
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 3000);
-    })
-    .catch(function(err) {
-      console.log("Error in Create new Emergency while creating emergency", err);
-    });
+    }catch (error){
+      console.log("Error during emergency creation:", error);
+    }
   }
 
 
@@ -307,6 +237,17 @@ const NovaEmergencia = () => {
                 </Select>
               </FormControl>
             </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Contact Telephone"
+                name="telephone_contact"
+                value={formData.telephone_contact}
+                onChange={handleChange}
+                required
+              />
+            </Grid>
             
             {/* <Grid item xs={12} md={6}>
               <FormControl fullWidth>
@@ -367,5 +308,7 @@ const NovaEmergencia = () => {
     </Box>
   );
 };
+
+
 
 export default NovaEmergencia; 

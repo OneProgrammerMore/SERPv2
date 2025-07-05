@@ -8,6 +8,7 @@ import uuid
 import logging
 import asyncio
 
+import os
 
 # Get Settings
 from src.configs.config import settings
@@ -23,7 +24,7 @@ app = FastAPI(title="SERP Backend API")
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://192.168.122.174:3000"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001", os.environ['API_URL_CORS']],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,7 +51,7 @@ async def startup_event():
     # await sessionmanager.close() 
     await sessionmanager.create_db_and_tables()
     # sessionmanager.init_db()
-    # await seed_db()
+    await seed_db()
 
 
 @app.on_event("shutdown")

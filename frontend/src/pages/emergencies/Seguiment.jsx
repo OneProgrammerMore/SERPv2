@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Typography,
@@ -29,30 +30,24 @@ import {
   Add as AddIcon
 } from '@mui/icons-material';
 
-const Seguiment = () => {
-  const [emergencies, setEmergencies] = React.useState(() => {
-    const savedIncidents = localStorage.getItem('incidents');
-    if (savedIncidents) {
-      return JSON.parse(savedIncidents);
-    }
-    return [];
-  });
+import { fetchEmergencies } from '../../redux/slices/emergenciesSlice';
 
+const Seguiment = () => {
+
+  const dispatch = useDispatch();
+  const emergencies = useSelector(state => state.emergencies.emergencies);
   const [openUpdateModal, setOpenUpdateModal] = React.useState(false);
   const [selectedEmergency, setSelectedEmergency] = React.useState(null);
   const [newUpdate, setNewUpdate] = React.useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Actualizar emergencias cuando cambien en localStorage
-  React.useEffect(() => {
-    const handleStorageChange = () => {
-      const savedIncidents = localStorage.getItem('incidents');
-      if (savedIncidents) {
-        setEmergencies(JSON.parse(savedIncidents));
-      }
-    };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+  useEffect(() => {
+    dispatch(fetchEmergencies());
+    const idEmergencies = setInterval(() => (
+      dispatch(fetchEmergencies())
+    ), 100000);
+    return () => clearInterval(idEmergencies) ;  
   }, []);
 
   const handleOpenUpdateModal = (emergency) => {
@@ -90,20 +85,21 @@ const Seguiment = () => {
       return emergency;
     });
 
-    setEmergencies(updatedEmergencies);
+    //setEmergencies(updatedEmergencies);
+    dispatch(fetchEmergencies)
     localStorage.setItem('incidents', JSON.stringify(updatedEmergencies));
     handleCloseUpdateModal();
   };
 
   // Función para ordenar las emergencias
-  const activeEmergencies = emergencies.filter(e => e.status === 'active');
-  const resolvedEmergencies = emergencies.filter(e => e.status !== 'active');
+  const activeEmergencies = emergencies.filter(e => e.status === 'Active');
+  const resolvedEmergencies = emergencies.filter(e => e.status !== 'Active');
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Seguiment d'Emergències
+          Emergencies Tracking
         </Typography>
         <IconButton>
           <RefreshIcon />
@@ -114,7 +110,7 @@ const Seguiment = () => {
       {activeEmergencies.length > 0 && (
         <Box sx={{ mb: 3 }}>
           <Typography variant="h5" color="text.secondary">
-            Emergències Actives
+            Active Emergencies
           </Typography>
         </Box>
       )}
@@ -129,15 +125,15 @@ const Seguiment = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <LocationIcon fontSize="small" />
                     <Typography variant="body2">
-                      {emergency.location || 'No especificada'}
+                      { `Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}` || 'Unknown'}
                     </Typography>
                   </Box>
                 }
                 action={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Chip
-                      label={emergency.status === 'active' ? 'Activa' : 'Resolta'}
-                      color={emergency.status === 'active' ? 'error' : 'success'}
+                      label={emergency.status === 'Active' ? 'Active' : 'Error'}
+                      color={emergency.status === 'active' ? 'success' : 'error'}
                     />
                     <IconButton
                       size="small"
@@ -155,7 +151,7 @@ const Seguiment = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <AccessTimeIcon color="action" />
                       <Typography variant="body2">
-                        Última actualització: {new Date(emergency.lastUpdate).toLocaleString()}
+                        Last Update: {new Date(emergency.time_updated).toLocaleString()}
                       </Typography>
                     </Box>
                   </Grid>
@@ -163,10 +159,11 @@ const Seguiment = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <GroupIcon color="action" />
                       <Typography variant="body2">
-                        Prioritat: {
-                          emergency.priority === 'critical' ? 'Crítica' :
-                          emergency.priority === 'high' ? 'Alta' :
-                          emergency.priority === 'medium' ? 'Mitjana' : 'Baixa'
+                        Priority: {
+                          emergency.priority === 'Critical' ? 'Critical' :
+                          emergency.priority === 'High' ? 'High' :
+                          emergency.priority === 'Medium' ? 'Medium' : 
+                          emergency.priority === 'Low' ? 'Low' : 'Unknown'
                         }
                       </Typography>
                     </Box>
@@ -175,19 +172,21 @@ const Seguiment = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <GroupIcon color="action" />
                       <Typography variant="body2">
-                        Tipus: {
-                          emergency.type === 'fire' ? 'Incendi' :
-                          emergency.type === 'medical' ? 'Emergència Mèdica' :
-                          emergency.type === 'accident' ? 'Accident' :
-                          emergency.type === 'natural' ? 'Desastre Natural' : 'Altres'
+                        Type: {
+                          emergency.emergency_type === 'Fire' ? 'Fire' :
+                          emergency.emergency_type === 'Medical' ? 'Medical' :
+                          emergency.emergency_type === 'Accident' ? 'Accident' :
+                          emergency.emergency_type === 'Natural Disaster' ? 'Desastre Natural' : 'Other'
                         }
                       </Typography>
                     </Box>
                   </Grid>
                 </Grid>
-
+                
+                
+                {/* ToDo - This part implementation should be done in the server in the future*/}
                 <Typography variant="subtitle2" gutterBottom>
-                  Últimes Actualitzacions {emergency.updates ? `(${emergency.updates.length}/3)` : '(0/3)'}
+                  Last Updates {emergency.updates ? `(${emergency.updates.length}/3)` : '(0/3)'}
                 </Typography>
                 <List>
                   {(emergency.updates || []).slice(0, 3).map((update, index) => (
@@ -207,8 +206,8 @@ const Seguiment = () => {
                   {(!emergency.updates || emergency.updates.length === 0) && (
                     <ListItem>
                       <ListItemText
-                        primary="No hi ha actualitzacions"
-                        secondary="Afegeix la primera actualització fent clic al botó +"
+                        primary="There are not updates"
+                        secondary="(Add the first update clicking the button +) [ToDo For the future] "
                       />
                     </ListItem>
                   )}
@@ -224,7 +223,7 @@ const Seguiment = () => {
         <>
           <Box sx={{ mt: 6, mb: 3 }}>
             <Typography variant="h5" color="text.secondary">
-              Emergències Resoltes
+              Solved Emergencies
             </Typography>
           </Box>
           
@@ -242,14 +241,14 @@ const Seguiment = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <LocationIcon fontSize="small" />
                         <Typography variant="body2">
-                          {emergency.location || 'No especificada'}
+                        { `Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}` || 'Unknown'}
                         </Typography>
                       </Box>
                     }
                     action={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Chip
-                          label="Resolta"
+                          label="Solved"
                           color="success"
                           size="small"
                         />
@@ -262,7 +261,7 @@ const Seguiment = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <AccessTimeIcon color="action" fontSize="small" />
                           <Typography variant="body2">
-                            Última actualització: {new Date(emergency.lastUpdate).toLocaleString()}
+                            Last Update: {new Date(emergency.time_updated).toLocaleString()}
                           </Typography>
                         </Box>
                       </Grid>

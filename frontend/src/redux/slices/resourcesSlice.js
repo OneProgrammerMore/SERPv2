@@ -3,18 +3,150 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
+const fetchResourcesAPICall = async ()  => {
+  const endpoint = API_URL + '/api/devices'
+  
+  try {
+      
+    const response = await fetch(endpoint, {
+      method: 'GET', // or 'PUT'
+      headers: {
+        'Accept': 'application/json',
+      }
+    })
+
+    if (!response.ok) {
+      console.log(
+        "Looks like there was a problem. Status Code: " + response.status
+      );
+      return;
+    }
+    const data = await response.json();
+    return data;
+    
+  } catch(err) {
+    console.log("Error in Dashboard while fetching emergencies", err);
+  }
+}
+
+
+
 // Thunks
 export const fetchResources = createAsyncThunk(
   'resources/fetchResources',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/resources`);
-      return response.data;
+      //const response = await axios.get(`${API_URL}/resources`);
+      // return response.data;
+      const data = await fetchResourcesAPICall();
+      return data;
+  
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
   }
 );
+
+
+
+const fetchResourcesWithAssignmentsAPICall = ()  => {
+  const endpoint = API_URL + '/api/devices'
+
+  const response = fetch(endpoint, {
+    method: 'GET', // or 'PUT'
+    headers: {
+      'Accept': 'application/json',
+    }
+  });
+
+  return response;
+}
+
+const fetchAssignmentsAPICall = async (resources) => {
+  let endpoint = ''
+  for (const resource of resources){
+    endpoint = API_URL + '/api/devices/' + resource.id + '/assignments'
+
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+    if (!response.ok) {
+      console.log(
+        "Looks like there was a problem. Status Code: " + response.status
+      );
+      return;
+    }
+    const json = await response.json();
+
+    resource.assignments = json;
+  }
+  return resources;
+}
+
+
+
+// Thunks
+export const fetchResourcesWithAssignments = createAsyncThunk(
+  'resources/fetchResourcesWithAssigments',
+  async (_, { rejectWithValue }) => {
+    try {
+      //const response = await axios.get(`${API_URL}/resources`);
+      // return response.data;
+      const response = await fetchResourcesWithAssignmentsAPICall();
+
+      if(!response.ok){
+        console.log(
+          "Looks like there was a problem. Status Code: ",  response
+        );
+        return;
+      }
+      const json = await response.json()
+
+      const resourcesWithAssignment = await fetchAssignmentsAPICall(json)
+      
+      return resourcesWithAssignment;
+  
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+
+
+
+
+const createResourceAPICall = async(newResource) =>{
+  const endpoint = API_URL + '/api/devices'
+
+  const response = await fetch(endpoint, {
+    method: 'POST', // or 'PUT'
+    headers: {
+      "Content-type": "application/json"
+    },
+    body: JSON.stringify(newResource),
+  })
+
+  return response;
+}
+
+
+export const createResource = createAsyncThunk(
+  'resources/create',
+  async ({newResource},{rejectWithValue}) => {
+    try{
+      const response = await createResourceAPICall(newResource);
+      return response;
+    }catch (error){
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+
 
 export const assignResource = createAsyncThunk(
   'resources/assignResource',
@@ -39,6 +171,7 @@ export const unassignResource = createAsyncThunk(
     }
   }
 );
+
 
 // Slice inicial
 const initialState = {
@@ -71,6 +204,18 @@ const resourcesSlice = createSlice({
         state.resources = action.payload;
       })
       .addCase(fetchResources.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+      // Obtener recursos with assigments
+      .addCase(fetchResourcesWithAssignments.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchResourcesWithAssignments.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.resourcesWithAssigments = action.payload;
+      })
+      .addCase(fetchResourcesWithAssignments.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       })

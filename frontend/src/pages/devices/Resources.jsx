@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Typography,
@@ -27,7 +28,8 @@ import {
 import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import {APIURL, APIProtocol} from "../../constants.js"
+import { fetchResources, createResource } from '../../redux/slices/resourcesSlice';
+
 
 const modalStyle = {
   position: 'absolute',
@@ -94,9 +96,15 @@ const resourceIcons = {
 };
 
 const Resources = () => {
-  const [resources, setResources] = useState([]);
+
+  const dispatch = useDispatch();
+  
+
+  const resources = useSelector(state => state.resources.resources);
+  const statusFetchResources = useSelector(state => state.resources.status);
+  //const [resources, setResources] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  //const [isLoading, setIsLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [openMap, setOpenMap] = useState(false);
   const [formData, setFormData] = useState({
@@ -107,79 +115,10 @@ const Resources = () => {
     actual_longitude: '',
   });
 
-  // useEffect(() => {
-  //   // Cargar recursos desde localStorage
-  //   const storedResources = localStorage.getItem('resources');
-  //   if (storedResources) {
-  //     setResources(JSON.parse(storedResources));
-  //   } else {
-  //     // Si no hay recursos en localStorage, usar los datos de ejemplo
-  //     const mockResources = [
-  //       {
-  //         id: 1,
-  //         name: 'Ambulancia 1',
-  //         type: 'ambulancia',
-  //         status: 'disponible',
-  //         location: '41.3879, 2.16992',
-  //         latitude: 41.3879,
-  //         longitude: 2.16992,
-  //         lastUpdate: '2024-03-03T12:00:00'
-  //       },
-  //       {
-  //         id: 2,
-  //         name: 'Patrulla 1',
-  //         type: 'policia',
-  //         status: 'disponible',
-  //         location: '41.3851, 2.1734',
-  //         latitude: 41.3851,
-  //         longitude: 2.1734,
-  //         lastUpdate: '2024-03-03T13:30:00'
-  //       },
-  //       {
-  //         id: 3,
-  //         name: 'Camión Bomberos 1',
-  //         type: 'bombero',
-  //         status: 'disponible',
-  //         location: '41.3902, 2.1647',
-  //         latitude: 41.3902,
-  //         longitude: 2.1647,
-  //         lastUpdate: '2024-03-03T14:15:00'
-  //       }
-  //     ];
-  //     setResources(mockResources);
-  //     localStorage.setItem('resources', JSON.stringify(mockResources));
-  //   }
-  //   setIsLoading(false);
-  // }, []);
-  const fetchResources = ()  => {
-    const endpoint = APIProtocol + APIURL + '/api/devices'
-    fetch(endpoint, {
-      method: 'GET', // or 'PUT'
-      headers: {
-        'Accept': 'application/json',
-      }
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      response.json().then(function(data) {
-        setResources(data)
-        console.log(data)
-        setIsLoading(false);
-      });
-    })
-    .catch(function(err) {
-      console.log("Error in Dashboard while fetching emergencies", err);
-    });
-  }
   useEffect(() => {
-    fetchResources()
+    dispatch(fetchResources())
     const idResources = setInterval(() => (
-      fetchResources()
+      dispatch(fetchResources())
     ), 100000);
     return () => clearInterval(idResources) ;  
   }, []);
@@ -226,44 +165,35 @@ const Resources = () => {
   //   handleModalClose();
   // };
 
-  const handleAddResource = (event) => {
+  const handleAddResource = async (event) => {
     event.preventDefault();
-    console.log("DEBUG - Inside the function")
     // Crear nueva incidencia con ID único y fecha
     const newResource = {
       ...formData
     };
-    console.log("DEBUG - Inside the function 2")
-    console.log(formData)
-    console.log(JSON.stringify(newResource))
-    const endpoint = APIProtocol + APIURL + '/api/devices'
-    fetch(endpoint, {
-      method: 'POST', // or 'PUT'
-      headers: {
-        // 'Accept': 'application/json',
-        "Content-type": "application/json"
-      },
-      body: JSON.stringify(newResource),
-    })
-    .then(function(response) {
-      if (!response.ok) {
+
+    try{
+      const response = await dispatch(createResource({newResource}));
+
+      if(!response.payload.ok){
         console.log(
-          "Looks like there was a problem. Status Code: " + response.status
+          "Looks like there was a problem. Status Code: ", response
         );
         return;
+      }else{
+        console.log("Succesfully created new emergency")
+        dispatch(fetchResources())
+        handleModalClose();
       }
-      console.log("Succesfully created new emergency")
-      fetchResources()
-      handleModalClose();
-    })
-    .catch(function(err) {
+    }catch (err){
       console.log("Error in Create new Emergency while creating emergency", err);
       handleModalClose();
-    });
+    }
+
   };
 
   const handleRefresh = () => {
-    fetchResources()
+    dispatch(fetchResources())
   };
 
   const handleSearchChange = (event) => {
@@ -292,7 +222,7 @@ const Resources = () => {
     <Box sx={{ flexGrow: 1 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Gestió de Recursos
+          Resources Administration
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
@@ -306,14 +236,18 @@ const Resources = () => {
             variant="outlined"
             startIcon={<RefreshIcon />}
             onClick={handleRefresh}
-            disabled={isLoading}
+            
+            disabled={
+              statusFetchResources == 'succeeded'?
+              false : true
+            }
             sx={{
               '&:disabled': {
                 backgroundColor: 'action.disabledBackground',
               }
             }}
           >
-            {isLoading ? 'Updating...' : 'Update'}
+            {statusFetchResources == 'pending' ? 'Updating...' : 'Update'}
           </Button>
         </Box>
       </Box>
@@ -388,15 +322,6 @@ const Resources = () => {
                 readOnly: true,
               }}
             />
-            {/* <TextField
-              fullWidth
-              label="Ubicació"
-              name="location"
-              value={newResource.location}
-              InputProps={{
-                readOnly: true,
-              }}
-            /> */}
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
               <Button onClick={handleModalClose}>Cancel·lar</Button>
               <Button 
@@ -491,7 +416,7 @@ const Resources = () => {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Cercar recursos..."
+          placeholder="Search..."
           value={searchTerm}
           onChange={handleSearchChange}
           InputProps={{

@@ -1,8 +1,10 @@
 #!/bin/bash
 
+# Installing Dependencies
+pip install --no-compile --no-cache-dir -r requirements.txt
+
 #Making Migrations
 echo "Migrating DB"
-
 
 until alembic upgrade head
 do

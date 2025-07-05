@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-import src.models.models as models
+import src.models as models
 
 import asyncio
 from src.configs.DBSessionManager import DATABASE_URL

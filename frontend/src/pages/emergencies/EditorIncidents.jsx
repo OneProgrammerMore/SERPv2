@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Typography,
@@ -29,11 +30,13 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon
 } from '@mui/icons-material';
-import {APIURL, APIProtocol} from "../../constants.js"
+import { fetchEmergencies, deleteEmergency, updateEmergency } from '../../redux/slices/emergenciesSlice';
 
 
 const EditorIncidents = () => {
+  
   const [emergencies, setEmergencies] = React.useState([]);
+  const emergenciesStore = useSelector(state => state.emergencies.emergencies);
   const [openDialog, setOpenDialog] = React.useState(false);
   const [selectedEmergency, setSelectedEmergency] = React.useState(null);
   const [orderDirection, setOrderDirection] = React.useState('desc');
@@ -44,53 +47,23 @@ const EditorIncidents = () => {
     priority: '',
     emergency_type: ''
   });
-  // const [modEmergencyID, setModEmergencyID] =  React.useState(null);
-  // Cargar incidencias del LocalStorage
-  // useEffect(() => {
-  //   try {
-  //     const storedIncidents = JSON.parse(localStorage.getItem('incidents') || '[]');
-  //     console.log('Incidencias almacenadas:', storedIncidents);
-  //     const sortedIncidents = sortIncidents(storedIncidents, 'desc');
-  //     setIncidents(sortedIncidents);
-  //   } catch (error) {
-  //     console.error('Error al cargar las incidencias:', error);
-  //     setIncidents([]);
-  //   }
-  // }, []);
-  const fetchEmergencies = ()  => {
-    setEmergencies([])
-    const endpoint = APIProtocol + APIURL + '/api/alerts'
-    fetch(endpoint, {
-      method: 'GET', // or 'PUT'
-      headers: {
-        'Accept': 'application/json',
-      }
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      response.json().then(function(data) {
-        setEmergencies(data)
-        console.log(data)
-      });
-    })
-    .catch(function(err) {
-      console.log("Error in Dashboard while fetching emergencies", err);
-    });
-  }
+  const dispatch = useDispatch();
 
   useEffect(() => {
     try {
-      fetchEmergencies()
+      dispatch(fetchEmergencies());
     } catch (error) {
       console.error('Error al cargar las incidencias:', error);
-      setEmergencies([]);
     }
   }, []);
+
+  // Sync Redux state to local state
+  useEffect(() => {
+    if (emergenciesStore) {
+      setEmergencies(emergenciesStore);
+    }
+  }, [emergenciesStore]);
+    
 
   // Función auxiliar para ordenar incidencias
   const sortEmergencies= (emergenciesList, direction) => {
@@ -125,7 +98,6 @@ const EditorIncidents = () => {
 
   const handleEditClick = (emergency) => {
     setSelectedEmergency(emergency);
-    // setModEmergencyID(emergency.id);
     setFormData({
       name: emergency.name,
       description: emergency.description,
@@ -147,118 +119,47 @@ const EditorIncidents = () => {
       emergency_type: ''
     });
   };
-
-  // const handleFormChange = (event) => {
-  //   const { name, value } = event.target;
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     [name]: value
-  //   }));
-  // };
-
-  // const handleSaveEdit = () => {
-  //   const updatedEmergencies = emergencies.map(emergency => {
-  //     if (emergency.id === selectedEmergency.id) {
-  //       // Si el estado es 'resolved', ignoramos la prioridad seleccionada
-  //       const updatedEmergency = {
-  //         ...emergency,
-  //         ...editForm,
-  //         lastUpdate: new Date().toISOString()
-  //       };
-        
-  //       // Si el estado es 'resolved', forzamos la prioridad a 'resolved'
-  //       if (editForm.status === 'resolved') {
-  //         updatedEmergency.priority = 'resolved';
-          
-  //         // Si hay un recurso asignado, lo marcamos como disponible
-  //         if (emergency.selectedResource) {
-  //           const storedResources = JSON.parse(localStorage.getItem('resources') || '[]');
-  //           const updatedResources = storedResources.map(resource => {
-  //             if (resource.id === parseInt(emergency.selectedResource)) {
-  //               return { ...resource, status: 'disponible' };
-  //             }
-  //             return resource;
-  //           });
-  //           localStorage.setItem('resources', JSON.stringify(updatedResources));
-  //         }
-  //       }
-        
-  //       return updatedEmergency;
-  //     }
-  //     return emergency;
-  //   });
-
-  //   localStorage.setItem('emergencies', JSON.stringify(updatedEmergencies));
-  //   // Aplicar el ordenamiento después de guardar
-  //   const sortedEmergencies = sortEmergencies(updatedEmergencies, orderDirection);
-  //   setEmergencies(sortedEmergencies);
-  //   handleCloseDialog();
-  // };
-  const handleSaveEdit = (event) => {
+  
+  const handleUpdate = async (event) => {
     event.preventDefault();
     const updatedEmergency = {
       ...formData,
     };
-    
-    const endpoint = APIProtocol + APIURL + '/api/alerts/' + selectedEmergency.id
-    console.log("Endpoint Update", endpoint)
-    console.log(updatedEmergency)
+    const id = selectedEmergency.id;
+    try{ 
 
-
-    fetch(endpoint, {
-      method: 'PATCH', // or 'PUT'
-      headers: {
-        // 'Accept': 'application/json',
-        "Content-type": "application/json"
-      },
-      body: JSON.stringify(updatedEmergency),
-    })
-    .then(function(response) {
-      if (!response.ok) {
+      const response = await dispatch(updateEmergency({id, updatedEmergency})).unwrap()
+      console.log(response)
+      if (!response.ok){
         console.log(
-          "Looks like there was a problem. Status Code: " + response.status
+          "Looks like there was a problem. Status Code: ", response
         );
         return;
+      }else{
+        dispatch(fetchEmergencies());
+        handleCloseDialog();
       }
-      console.log("Succesfully updated the emergency")
-      fetchEmergencies();
-      handleCloseDialog();
-    })
-    .catch(function(err) {
+    }catch(err) {
       console.log("Error in Create new Emergency while creating emergency", err);
-    });
+    }
   };
-  
 
-  // const handleDelete = (emergencyID) => {
-  //   const updatedEmergencies = emergencies.filter(emergency => emergency.id !== emergencyID);
-  //   localStorage.setItem('emergencies', JSON.stringify(updatedEmergencies));
-  //   setEmergencies(updatedEmergencies);
-  // };
+  const handleDelete = async (emergencyID) => {
 
-  const handleDelete = (emergencyID) => {
-    const endpoint = APIProtocol + APIURL + '/api/alerts/' + emergencyID
-    console.log("Endpoint Update", endpoint)
-    fetch(endpoint, {
-      method: 'DELETE', // or 'PUT'
-      headers: {
-        // 'Accept': 'application/json',
-        "Content-type": "application/json"
-      },
-    })
-    .then(function(response) {
-      if (!response.ok) {
+    const response = await dispatch(deleteEmergency(emergencyID));
+    try{
+      if (!response.payload.ok){
         console.log(
-          "Looks like there was a problem. Status Code: " + response.status
+          "Looks like there was a problem. Status Code: ", response
         );
         return;
-      }
-      console.log("Succesfully updated the emergency")
-      fetchEmergencies();
-    })
-    .catch(function(err) {
+      }else{
+        console.log("Succesfully updated the emergency")
+        dispatch(fetchEmergencies());
+      }  
+    } catch(err) {
       console.log("Error in Create new Emergency while creating emergency", err);
-    });
+    }
   };
 
   return (
@@ -360,7 +261,7 @@ const EditorIncidents = () => {
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Emergency</DialogTitle>
-        <form onSubmit={handleSaveEdit}>
+        <form onSubmit={handleUpdate}>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Grid container spacing={2}>

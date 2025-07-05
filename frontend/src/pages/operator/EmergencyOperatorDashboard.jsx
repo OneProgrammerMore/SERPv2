@@ -44,10 +44,8 @@ import {
   Close as CloseIcon,
   Search as SearchIcon
 } from '@mui/icons-material';
-// import { fetchEmergencies, createEmergency, updateEmergency, resolveEmergency, assignResourcesToEmergency } from '../../redux/slices/emergenciesSlice';
-import { fetchResources } from '../../redux/slices/resourcesSlice';
-import { fetchAlerts, resolveAlert } from '../../redux/slices/alertsSlice';
-import {APIURL, APIProtocol} from "../../constants.js"
+import { fetchEmergencies, createEmergency, updateEmergency, assignResourcesToEmergency } from '../../redux/slices/emergenciesSlice';
+import { fetchResourcesWithAssignments } from '../../redux/slices/resourcesSlice';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
 
@@ -92,7 +90,8 @@ const EmergencyCard = ({ emergency, onAssign, onUpdate, onResolve, resources }) 
           <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
             <LocationIcon fontSize="small" sx={{ mr: 0.5 }} />
             <Typography variant="body2">
-              {`Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}`}
+              {`Lat: ${emergency?.location_emergency_data?.latitude ? emergency.location_emergency_data.latitude : "NA"}
+              Long: ${emergency?.location_emergency_data?.longitude ? emergency.location_emergency_data.longitude : "NA"}` }
             </Typography>
             <TimeIcon fontSize="small" sx={{ ml: 2, mr: 0.5 }} />
             <Typography variant="body2">
@@ -177,30 +176,21 @@ const EmergencyOperatorDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogType, setDialogType] = useState('');
-  const [selectedEmergencyId, setSelectedEmergencyId] = useState(null);
+  const [emergencyID, setSelectedEmergencyId] = useState(null);
   const [selectedResources, setSelectedResources] = useState([]);
   const [selectedResourcesPrev, setSelectedResourcesPrev] = useState([]);
-  const [newEmergency, setNewEmergency] = useState({
-    name: '',
-    description: '',
-    location: '',
-    telephone_contact: '',
-    latitude: '',
-    longitude: '',
-    status: 'Active'
-  });
   const [updateEmergencyData, setUpdateEmergencyData] = useState({
     status: 'Pending',
     description: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [openMap, setOpenMap] = React.useState(false);
-  // const emergencies = useSelector(state => state.emergencies.emergencies);
-  // const emergenciesStatus = useSelector(state => state.emergencies.status);
-  // const resources = useSelector(state => state.resources.resources);
-  // const resourcesStatus = useSelector(state => state.resources.status);
-  // const alerts = useSelector(state => state.alerts.alerts);
-  // const alertsStatus = useSelector(state => state.alerts.status);
+
+  const resourcesStore = useSelector(state => state.resources.resourcesWithAssigments);
+  const statusResources = useSelector(state => state.resources.status);
+  const emergenciesStore = useSelector(state => state.emergencies.emergencies);
+  const statusEmergencies = useSelector(state => state.emergencies.status);
+
   const [emergencies, setEmergencies] = useState([]);
   const [resources, setResources] = useState([]);
 
@@ -222,6 +212,37 @@ const EmergencyOperatorDashboard = () => {
     // setAvailableResources(resourcesIn.filter(r => r.status === 'undefined' || r.assignments.length == 0 ).length)
     // setAssignedResources(resourcesIn.filter(r => typeof r.assignments !== 'undefined' && r.assignments.length > 0 ).length)
   }
+
+  // Sync Redux state to local state
+  useEffect(() => {
+    if (emergenciesStore) {
+      setEmergencies(emergenciesStore);
+      computeStatisticsEmergencies(emergenciesStore);
+    }
+  }, [emergenciesStore]);
+
+  // Sync Redux state to local state
+  useEffect(() => {
+    if (resourcesStore) {
+      setResources(resourcesStore);
+      computeStatisticsResources(resourcesStore);
+    }
+  }, [resourcesStore]);
+
+
+  // Sync Redux state to local state
+  useEffect(() => {
+    if(statusEmergencies != 'succeeded' && tabValue == 0){
+      setIsLoading(false);
+    }
+  }, [statusEmergencies]);
+
+  // Sync Redux state to local state
+  useEffect(() => {
+    if(statusResources != 'succeeded' && tabValue == 1){
+      setIsLoading(false);
+    }
+  }, [statusResources]);
 
   
   const modalStyle = {
@@ -251,151 +272,19 @@ const EmergencyOperatorDashboard = () => {
       ...prevState,
       latitude: lat.toFixed(6),
       longitude: lng.toFixed(6),
-      // location: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
     }));
     setOpenMap(false);
   };
-  // useEffect(() => {
-  //   // Cargar datos al montar el componente
-  //   dispatch(fetchEmergencies());
-  //   dispatch(fetchResources());
-  //   dispatch(fetchAlerts());
-  // }, [dispatch]);
-  
-  // const handleRefresh = () => {
-  //   dispatch(fetchEmergencies());
-  //   dispatch(fetchResources());
-  //   dispatch(fetchAlerts());
-  // };
-  
-  const fetchEmergencies = ()  => {
-    const endpoint = APIProtocol + APIURL + '/api/alerts'
-    fetch(endpoint, {
-      method: 'GET', // or 'PUT'
-      headers: {
-        'Accept': 'application/json',
-      }
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      response.json().then(function(data) {
-        setEmergencies(data)
-        console.log(data)
-        computeStatisticsEmergencies(data)
-        setIsLoading(false);
-      });
-    })
-    .catch(function(err) {
-      console.log("Error in Dashboard while fetching emergencies", err);
-    });
-  }
 
-  const fetchResources = ()  => {
-    const endpoint = APIProtocol + APIURL + '/api/devices'
-    fetch(endpoint, {
-      method: 'GET', // or 'PUT'
-      headers: {
-        'Accept': 'application/json',
-      }
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      response.json().then(function(data) {
-        setResources(data)
-        console.log(data)
-        computeStatisticsResources(data)
-        setIsLoading(false);
-      });
-    })
-    .catch(function(err) {
-      console.log("Error in Dashboard while fetching emergencies", err);
-    });
-  }
-
-  const fetchAssignments = async (resources) => {
-    let endpoint = ''
-    for (const resource of resources){
-      endpoint = APIProtocol + APIURL + '/api/devices/' + resource.id + '/assignments'
-
-      fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        }
-      })
-      .then(function(response) {
-        if (!response.ok) {
-          console.log(
-            "Looks like there was a problem. Status Code: " + response.status
-          );
-          return;
-        }
-        response.json().then(function(data) {
-          resource.assignments = data
-         
-        });
-      })
-      .catch(function(err) {
-        console.log("Error in Dashboard while fetching emergencies", err);
-      })
-    }
-    return resources;
-  }
-
-  const fetchResourcesWithAssignments = ()  => {
-    const endpoint = APIProtocol + APIURL + '/api/devices'
-    fetch(endpoint, {
-      method: 'GET', // or 'PUT'
-      headers: {
-        'Accept': 'application/json',
-      }
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      response.json().then(function(data) {
-        let resourcesWithAssignment = []
-        resourcesWithAssignment = fetchAssignments(data).then(function(resourcesWithAssignment){
-          setResources(resourcesWithAssignment)
-          console.log("resourcesWithAssigments")
-          console.log(resourcesWithAssignment)
-          computeStatisticsResources(resourcesWithAssignment)
-          setIsLoading(false);
-        });
-        
-      });
-    })
-    .catch(function(err) {
-      console.log("Error in Dashboard while fetching emergencies", err);
-    });
-  }
 
   useEffect(() => {
-    fetchEmergencies()
+    dispatch(fetchEmergencies())
     const idEmergencies = setInterval(() => (
-      fetchEmergencies()
+      dispatch(fetchEmergencies())
     ), 100000);
-    // fetchResources()
-    // const idResources = setInterval(() => (
-    //   fetchResources()
-    // ), 100000);
-    fetchResourcesWithAssignments()
+    dispatch(fetchResourcesWithAssignments());
     const idResources = setInterval(() => (
-      fetchResourcesWithAssignments()
+      dispatch(fetchResourcesWithAssignments())
     ), 100000);
     return () => clearInterval(idEmergencies), clearInterval(idResources) ;  
   }, []);
@@ -403,25 +292,16 @@ const EmergencyOperatorDashboard = () => {
   // Filtrar emergencias por búsqueda
   const filteredEmergencies = emergencies.filter(emergency => 
     emergency.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emergency.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //emergency.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emergency.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
- 
-
-  
   // const activeAlerts = alerts.filter(a => !a.resolved).length;
 
-  // useEffect(() => {
-  //   // Cargar datos al montar el componente
-  //   dispatch(fetchEmergencies());
-  //   dispatch(fetchResources());
-  //   dispatch(fetchAlerts());
-  // }, [dispatch]);
   
   const handleRefresh = () => {
-    fetchEmergencies()
-    fetchResourcesWithAssignments()
+    dispatch(fetchEmergencies());
+    dispatch(fetchResourcesWithAssignments());
   };
   
   const handleTabChange = (event, newValue) => {
@@ -438,171 +318,56 @@ const EmergencyOperatorDashboard = () => {
     setOpenDialog(true);
   };
 
-  const assignResourcesToEmergency = () => {
-    console.log("Assigning Resources to Emergency")
-    console.log("Emergency ID: ",selectedEmergencyId );
-    console.log("Resources IDs", selectedResources)
-    console.log("Resources IDs",[...selectedResources]);
 
-    const endpoint = APIProtocol + APIURL + '/api/alerts/' + selectedEmergencyId + '/assign' 
-    fetch(endpoint, {
-      method: 'POST', // or 'PUT'
-      headers: {
-        'Content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        resourcesIDs: [...selectedResources]
-      })
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem assigning the resources to the emergency. Status Code: " + response.status
-        );
-        return;
-      }
-      response.json().then(function(data) {
-        console.log("Assign Data : ", data)
-        setIsLoading(false);
-      });
-    })
-    .catch(function(err) {
-      console.log("Error in Dashboard while fetching emergencies", err);
-    });
-
-
-  }
   const solveEmergency = (emergencyID) => {
-    console.log("Solving Emergency")
-    console.log("Emergency ID: ", emergencyID);
     setSelectedEmergencyId(emergencyID);
     setDialogType('solve');
     setOpenDialog(true);
   }
 
-  const solveEmergencyAPICall = () =>{
-    const endpoint = APIProtocol + APIURL + '/api/alerts/' + selectedEmergencyId
-    console.log("Endpoint Update", endpoint)
-    fetch(endpoint, {
-      method: 'PATCH', // or 'PUT'
-      headers: {
-        // 'Accept': 'application/json',
-        "Content-type": "application/json"
-      },
-      body: JSON.stringify({
-        status: "Solved"
-      }),
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      console.log("Succesfully solved the emergency")
-      fetchEmergencies();
-      setOpenDialog(false);
-    })
-    .catch(function(err) {
-      console.log("Error in Create new Emergency while creating emergency", err);
-    });
-}
+  const handleDialogs = async () => {
+    let updatedEmergency = {};
+    let id;
 
-
-  const updateEmergency = () =>{
-    console.log("Updating Emergency")
-    const endpoint = APIProtocol + APIURL + '/api/alerts/' + selectedEmergencyId
-    console.log("Endpoint Update", endpoint)
-    fetch(endpoint, {
-      method: 'PATCH',
-      headers: {
-        "Content-type": "application/json"
-      },
-      body: JSON.stringify({
-        status: updateEmergencyData.status,
-        description: updateEmergencyData.description
-      }),
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      console.log("Succesfully updated the emergency")
-      fetchEmergencies();
-      setOpenDialog(false);
-    })
-    .catch(function(err) {
-      console.log("Error while updating the emergency:", err);
-    });
-  }
-  const createEmergency = () => {
-    const newEmergency = {
-      ...formData,
-      status: 'Active',
-    };
-    console.log("DEBUG - Inside the function 2")
-    console.log(newEmergency)
-    console.log(JSON.stringify(newEmergency))
-    const endpoint = APIProtocol + APIURL + '/api/alerts'
-    fetch(endpoint, {
-      method: 'POST', // or 'PUT'
-      headers: {
-        // 'Accept': 'application/json',
-        "Content-type": "application/json"
-      },
-      body: JSON.stringify(newEmergency),
-    })
-    .then(function(response) {
-      if (!response.ok) {
-        console.log(
-          "Looks like there was a problem. Status Code: " + response.status
-        );
-        return;
-      }
-      console.log("Succesfully created new emergency")
-      // Mostrar mensaje de éxito y limpiar el formulario
-      setFormData({
-        name: '',
-        description: '',
-        emergency_type: 'Other',
-        priority: 'High',
-        latitude: '',
-        longitude: '',
-        telephone_contact: '',
-        status: 'Active'
-        // selectedResource: ''
-      });
-      // Ocultar el mensaje después de 3 segundos
-      fetchEmergencies();
-      // setOpenDialog(false);
-    })
-    .catch(function(err) {
-      console.log("Error in Create new Emergency while creating emergency", err);
-    });
-  };
-
-  const handleDialogs = () => {
     switch(dialogType){
       case 'create':
-        createEmergency();
+        const newIncident = formData;
+        dispatch(createEmergency(newIncident));
+        setFormData({
+          name: '',
+          description: '',
+          emergency_type: 'Other',
+          priority: 'High',
+          latitude: '',
+          longitude: '',
+          telephone_contact: '',
+          status: 'Active'
+        });
+        // Ocultar el mensaje después de 3 segundos
+        dispatch(fetchEmergencies());
         break;
       case 'assign':
-        assignResourcesToEmergency();
+        dispatch(assignResourcesToEmergency({emergencyID, selectedResources}))//.unwrap();
+
         break;
       case 'solve':
-        // solveEmergency();
-        solveEmergencyAPICall();
+        updatedEmergency = {
+          status: "Solved"
+        }
+        id = emergencyID;
+        dispatch(updateEmergency({id, updatedEmergency}));
         break;
       case 'update':
-        updateEmergency();
+        updatedEmergency = {
+          status: updateEmergencyData.status,
+          description: updateEmergencyData.description
+        }
+        id = emergencyID;
+        dispatch(updateEmergency({id, updatedEmergency}));
         break;
     }
-    fetchResourcesWithAssignments();
-    fetchEmergencies()
+    dispatch(fetchResourcesWithAssignments());
+    dispatch(fetchEmergencies());
     setOpenDialog(false)
   }
 
@@ -620,19 +385,10 @@ const EmergencyOperatorDashboard = () => {
     setOpenDialog(true);
   };
   
-  const handleResolveEmergency = (emergencyId) => {
-    setSelectedEmergencyId(emergencyId);
-    setDialogType('solve');
-    setOpenDialog(true);
-  };
-  
   const findResourcesToEmergencyByID = (emergencyID) => {
     const prevResources = resources
       .filter(r => r.assignments != undefined  && r.assignments[0] != undefined   && r.assignments[0].id == emergencyID)
       .map(resource => (resource.id) )
-    console.log("ID = ", emergencyID)
-    console.log("prevResources = ", prevResources)
-    console.log("resources = ", resources);
     return prevResources
   }
 
@@ -641,15 +397,15 @@ const EmergencyOperatorDashboard = () => {
       case 'create':
         break;
       case 'assign':
-        setSelectedResourcesPrev(findResourcesToEmergencyByID(selectedEmergencyId))
+        setSelectedResourcesPrev(findResourcesToEmergencyByID(emergencyID));
         break;
       case 'solve':
         break;
       case 'update':
         break;
     }
-    fetchResourcesWithAssignments();
-    fetchEmergencies()
+    dispatch(fetchResourcesWithAssignments());
+    dispatch(fetchEmergencies());
   }
 
   useEffect(() => {
@@ -661,14 +417,12 @@ const EmergencyOperatorDashboard = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedEmergencyId(null);
-    console.log("selectedResources = ", selectedResources)
     setSelectedResources([]);
   };
   
   const handleResourceSelection = (event) => {
     setSelectedResources(event.target.value);
     setSelectedResourcesPrev(event.target.value);
-    console.log("resourceSelection = ", event.target)
   };
   
   const handleNewEmergencyChange = (event) => {
@@ -686,78 +440,6 @@ const EmergencyOperatorDashboard = () => {
       [name]: value
     }));
   };
-  
-  // const handleConfirmDialog = () => {
-  //   // Aquí se implementaría la lógica para cada tipo de acción
-  //   if (dialogType === 'assign') {
-  //     console.log(`Assignant recursos ${selectedResources} a l'emergència ${selectedEmergencyId}`);
-  //     dispatch(assignResourcesToEmergency({ emergencyId: selectedEmergencyId, resourceIds: selectedResources }));
-  //   } else if (dialogType === 'update') {
-  //     console.log(`Actualitzant emergència ${selectedEmergencyId}`, updateEmergencyData);
-  //     dispatch(updateEmergency({ 
-  //       id: selectedEmergencyId, 
-  //       emergencyData: updateEmergencyData
-  //     }));
-  //   } else if (dialogType === 'resolve') {
-  //     console.log(`Resolent emergència ${selectedEmergencyId}`);
-  //     dispatch(resolveEmergency(selectedEmergencyId));
-  //   } else if (dialogType === 'create') {
-  //     // Aquí se implementaría la lógica para crear una nueva emergencia
-  //     console.log('Creant nova emergència', newEmergency);
-  //     dispatch(createEmergency({
-  //       ...newEmergency,
-  //       timestamp: new Date().toISOString()
-  //     }));
-      
-  //     // Resetear el formulario
-  //     setNewEmergency({
-  //       title: '',
-  //       description: '',
-  //       location: '',
-  //       contactPhone: '',
-  //       latitude: 41.3851,
-  //       longitude: 2.1734,
-  //       status: 'active'
-  //     });
-  //   }
-  //   handleCloseDialog();
-  // };
-
-  // const handleNewEmergency = () => {
-  //   // Aquí se implementaría la lógica para cada tipo de acción
-  //   if (dialogType === 'assign') {
-  //     console.log(`Assignant recursos ${selectedResources} a l'emergència ${selectedEmergencyId}`);
-  //     // dispatch(assignResourcesToEmergency({ emergencyId: selectedEmergencyId, resourceIds: selectedResources }));
-  //   } else if (dialogType === 'update') {
-  //     console.log(`Actualitzant emergència ${selectedEmergencyId}`, updateEmergencyData);
-  //     // dispatch(updateEmergency({ 
-  //     //   id: selectedEmergencyId, 
-  //     //   emergencyData: updateEmergencyData
-  //     // }));
-  //   } else if (dialogType === 'resolve') {
-  //     console.log(`Resolent emergència ${selectedEmergencyId}`);
-  //     // dispatch(resolveEmergency(selectedEmergencyId));
-  //   } else if (dialogType === 'create') {
-  //     // Aquí se implementaría la lógica para crear una nueva emergencia
-  //     console.log('Creant nova emergència', newEmergency);
-  //     // dispatch(createEmergency({
-  //     //   ...newEmergency,
-  //     //   timestamp: new Date().toISOString()
-  //     // }));
-      
-  //     // Resetear el formulario
-  //     setNewEmergency({
-  //       name: '',
-  //       description: '',
-  //       location: '',
-  //       telephone_contact: '',
-  //       latitude: '',
-  //       longitude: '',
-  //       status: 'Active'
-  //     });
-  //   }
-  //   handleCloseDialog();
-  // };
   
   // Verificar si los datos están cargando
   // const isLoading = 
@@ -831,9 +513,9 @@ const EmergencyOperatorDashboard = () => {
       <Paper sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1 }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
-            <Tab label="Emergències" />
-            <Tab label="Recursos" />
-            <Tab label="Alertes" />
+            <Tab label="Emergencies" />
+            <Tab label="Resources" />
+            <Tab label="Alerts" />
           </Tabs>
           
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -876,7 +558,7 @@ const EmergencyOperatorDashboard = () => {
             {tabValue === 0 && (
               <Box>
                 {filteredEmergencies.length === 0 ? (
-                  <Alert severity="info">No s'han trobat emergències</Alert>
+                  <Alert severity="info">No found emergencies</Alert>
                 ) : (
                   filteredEmergencies.map(emergency => (
                     <EmergencyCard 
@@ -930,7 +612,7 @@ const EmergencyOperatorDashboard = () => {
               </Box>
             )}
             
-            {/* Tab de Alertas */}
+            {/* Tab de Alertas  - To Do For The future if needed... difference between alerts and emergencies?*/}
             {/* {tabValue === 2 && (
               <Box>
                 <List>
@@ -980,34 +662,6 @@ const EmergencyOperatorDashboard = () => {
           {dialogType === 'create' && 'Create New Emergency'}
         </DialogTitle>
         <DialogContent>
-          {/* {dialogType === 'assign' && (
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Available Resources</InputLabel>
-              <Select
-                multiple
-                value={selectedResources}
-                onChange={handleResourceSelection}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => {
-                      const resource = resources.find(r => r.id === value);
-                      return (
-                        <Chip key={value} label={resource?.name || value} />
-                      );
-                    })}
-                  </Box>
-                )}
-              >
-                {resources
-                  .filter(resource => !resource.emergencyId)
-                  .map(resource => (
-                    <MenuItem key={resource.id} value={resource.id}>
-                      {resource.name} - {resource.type}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-          )} */}
           {dialogType === 'assign' && (
             <FormControl fullWidth sx={{ mt: 2 }}>
               <InputLabel>Available Resources</InputLabel>
@@ -1028,7 +682,8 @@ const EmergencyOperatorDashboard = () => {
                 )}
               >
                 {resources
-                  // .filter(resource =>  resource.assignments != undefined && resource.assignments[0] == undefined)
+                  // ToDo Version 0.2 - Shown only the not assigned resources! [IMPORTANT!]
+                  //.filter(resource =>  resource.assignments != undefined && resource.assignments[0] == undefined)
                   .map(resource => (
                     <MenuItem key={resource.id} value={resource.id}>
                       {resource.name} - {resource.type}
@@ -1103,16 +758,6 @@ const EmergencyOperatorDashboard = () => {
                     required
                   />
                 </Grid>
-                {/* <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Location"
-                    name="location"
-                    value={newEmergency.location}
-                    onChange={handleNewEmergencyChange}
-                    required
-                  />
-                </Grid> */}
                 <Grid item xs={12}>
                   <Button
                     fullWidth
@@ -1235,7 +880,6 @@ const EmergencyOperatorDashboard = () => {
             </Box>
           </Box>
         </Modal>
-
 
         <DialogActions>
           <Button onClick={handleCloseDialog} startIcon={<CloseIcon />}>
