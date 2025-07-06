@@ -1,59 +1,76 @@
-from fastapi import FastAPI, HTTPException, Response
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Optional, Dict
-from datetime import datetime
-import httpx
-import uuid
-import logging
-import asyncio
+"""SERP FastAPI Service - For Emergencies Control, Monitoring and Logistics"""
 
+import logging
 import os
 
-# Get Settings
-from src.configs.config import settings
-settings
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+# Get Settings
+#from src.configs.config import settings
+
+# Config DB
+from src.configs.db_session_manager import sessionmanager
+from src.routes import emergencies, location, qosod, resources
+
+# Seed DB
+from src.seeders.main import seed_db
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="SERP Backend API")
+# app = FastAPI(title="SERP Backend API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """"Function that runs on startup the service (BEFORE starting the server)"""
+    # Initialize the DatabaseSessionManager
+    await sessionmanager.create_db_and_tables()
+    # Seed Database for Demo
+    if "SEED_DB_DEMO" in os.environ and os.environ["SEED_DB_DEMO"] == True:
+        await seed_db()
+    
+    yield
+    """ Functions that run when the server is terminatet"""
+    await sessionmanager.close()  # Cleanup DB connecti
+
+
+app = FastAPI(title="SERP Backend API", lifespan=lifespan)
+
 
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", os.environ['API_URL_CORS']],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        os.environ["API_URL_CORS"],
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-from src.routes import emergencies, location, qosod, resources
-
 app.include_router(emergencies.router)
 app.include_router(location.router)
-app.include_router(qosod.router)
+# app.include_router(qosod.router)
 app.include_router(resources.router)
 
 
-# Config DB
-from src.configs.DBSessionManager import sessionmanager
+
+# @app.on_event("startup")
+# async def startup_event():
+#     """"Function that runs on startup the service (BEFORE starting the server)"""
+#     # Initialize the DatabaseSessionManager
+#     await sessionmanager.create_db_and_tables()
+#     # Seed Database for Demo
+#     if "SEED_DB_DEMO" in os.environ and os.environ["SEED_DB_DEMO"] == True:
+#         await seed_db()
 
 
-#Seed DB
-from src.seeders.main import seed_db
-@app.on_event("startup")
-async def startup_event():
-    # Initialize the DatabaseSessionManager
-    # await sessionmanager.close() 
-    await sessionmanager.create_db_and_tables()
-    # sessionmanager.init_db()
-    await seed_db()
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    await sessionmanager.close()  # Cleanup DB connecti
+# @app.on_event("shutdown")
+# async def shutdown():
+#     """ Functions that run when the server is terminatet"""
+#     await sessionmanager.close()  # Cleanup DB connecti

@@ -1,72 +1,34 @@
-# from sqlalchemy import Column, String, Enum, Integer, Float, ForeignKey, DateTime, func
-# from sqlalchemy.dialects.postgresql import UUID
-# import enum
-# from src.configs.database import Base
-# import uuid
-
-# from src.models.location import Location
-# from src.models.address import Address
-
-# class ResourceStatusEnum(str, enum.Enum):
-#     UNKNOWN = "Unknown"
-#     ACTIVE = "Active"
-#     INACTIVE = "Inactive"
-#     RESTING = "Resting"
-#     AVAILIBLE = "Availible"
-
-# class Resource(Base):
-#     __tablename__ = "resources"
-
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-#     resource_type = Column(String(128), nullable=False)
-
-#     actual_address = Column(UUID(as_uuid=True), ForeignKey(Address.id))
-#     actual_location = Column(UUID(as_uuid=True), ForeignKey(Location.id))
-
-#     normal_address = Column(UUID(as_uuid=True), ForeignKey(Address.id))
-#     normal_location = Column(UUID(as_uuid=True), ForeignKey(Location.id))
-
-#     status = Column(Enum(ResourceStatusEnum), default=ResourceStatusEnum.UNKNOWN)
-#     responsible = Column(String(128), nullable=False)
-#     telephone = Column(String(128), nullable=False)
-#     email = Column(String(128), nullable=False)
-
-#     time_created = Column(DateTime(timezone=True), server_default=func.now())
-#     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
-
-
-from sqlalchemy import Column, String, Enum, Integer, Float, ForeignKey, DateTime, func, ForeignKey
-# from sqlalchemy.dialects.postgresql import UUID
+"""Resources Model for Database - PostgreSQL"""
 import enum
-from src.configs.database import Base
 import uuid as uuid_pkg
-from src.models.location import Location
-from src.models.address import Address
-from typing import Optional, List
 from datetime import datetime
-from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationship
-from uuid import uuid4, UUID
+from typing import List, Optional
+
+from sqlalchemy import Column, DateTime, Enum, String, func
+from sqlmodel import Field, Relationship, SQLModel
+
+from src.models.emergency import Emergency
 from src.models.emergencyresourceslink import EmergencyResourceLink
 
-# Enum for resource status
+
 class ResourceStatusEnum(str, enum.Enum):
+    """Resource Status Possibilities"""
     UNKNOWN = "Unknown"
     AVAILABLE = "Available"
     BUSY = "Busy"
     MAINTENANCE = "Maintenance"
 
-# Enum for resource status
+
 class ResourceTypeEnum(str, enum.Enum):
+    """Resource Types Possibilities"""
     UNKNOWN = "Unknown"
     AMBULANCE = "Ambulance"
     POLICE = "Police"
     FIRETRUCK = "Firetruck"
 
-class Resource(SQLModel, table=True):
-    # __tablename__ = "resources"
 
-    # id: uuid.UUID = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+class Resource(SQLModel, table=True):
+    """Resource Model for SQL Model"""
     id: uuid_pkg.UUID = Field(
         default_factory=uuid_pkg.uuid4,
         primary_key=True,
@@ -74,24 +36,48 @@ class Resource(SQLModel, table=True):
         nullable=False,
     )
     name: Optional[str] = Field(sa_column=Column(String(128), nullable=False))
-    resource_type: Optional[str] = Field(sa_column=Column(Enum(ResourceTypeEnum), default=ResourceTypeEnum.UNKNOWN))
+    resource_type: Optional[str] = Field(
+        sa_column=Column(
+            Enum(ResourceTypeEnum), default=ResourceTypeEnum.UNKNOWN
+        )
+    )
 
-    actual_address: Optional[uuid_pkg.UUID] = Field(default=None, foreign_key="address.id", ondelete="SET NULL")
-    actual_location: Optional[uuid_pkg.UUID] = Field(default=None, foreign_key="location.id", ondelete="SET NULL")
+    actual_address: Optional[uuid_pkg.UUID] = Field(
+        default=None, foreign_key="address.id", ondelete="SET NULL"
+    )
+    actual_location: Optional[uuid_pkg.UUID] = Field(
+        default=None, foreign_key="location.id", ondelete="SET NULL"
+    )
 
-    normal_address: Optional[uuid_pkg.UUID] = Field(default=None, foreign_key="address.id", ondelete="SET NULL")
-    normal_location: Optional[uuid_pkg.UUID] = Field(default=None, foreign_key="location.id", ondelete="SET NULL")
+    normal_address: Optional[uuid_pkg.UUID] = Field(
+        default=None, foreign_key="address.id", ondelete="SET NULL"
+    )
+    normal_location: Optional[uuid_pkg.UUID] = Field(
+        default=None, foreign_key="location.id", ondelete="SET NULL"
+    )
 
-    status: Optional[ResourceStatusEnum] = Field(sa_column=Column(Enum(ResourceStatusEnum), default=ResourceStatusEnum.UNKNOWN))
-    responsible: Optional[str] = Field(sa_column=Column(String(128), nullable=True))
-    telephone: Optional[str] = Field(sa_column=Column(String(128), nullable=True))
+    status: Optional[ResourceStatusEnum] = Field(
+        sa_column=Column(
+            Enum(ResourceStatusEnum), default=ResourceStatusEnum.UNKNOWN
+        )
+    )
+    responsible: Optional[str] = Field(
+        sa_column=Column(String(128), nullable=True)
+    )
+    telephone: Optional[str] = Field(
+        sa_column=Column(String(128), nullable=True)
+    )
     email: Optional[str] = Field(sa_column=Column(String(128), nullable=True))
 
-    time_created: datetime = Field(sa_column=Column(DateTime(timezone=True), server_default=func.now()))
-    time_updated: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), onupdate=func.now()))
+    time_created: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+    )
+    time_updated: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now())
+    )
 
     emergencies: List["Emergency"] = Relationship(
-        back_populates="resources", 
-        link_model=EmergencyResourceLink, 
+        back_populates="resources",
+        link_model=EmergencyResourceLink,
         sa_relationship_kwargs={"lazy": "selectin"},
     )

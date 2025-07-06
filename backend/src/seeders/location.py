@@ -1,29 +1,34 @@
-from faker import Faker
-from src.models.location import Location
+"""
+Seeder to create locations in the database
+"""
+
 import random
+
 from src.configs.database import get_db
-import asyncio
+from src.models.location import Location
 
 
 async def location_seeder():
-    
+    """
+    Creates a localtion in the database and returns its ID
+    """
     latitude: float = round(random.uniform(41.26, 41.47), 6)
-    longitude:float = round(random.uniform(2.03, 2.25), 6)
-    accuracy:float = round(random.uniform(0, 200), 5)
-    speed:float = round(random.uniform(0, 360), 3)
-    heading:float = round(random.uniform(0, 360), 5)
+    longitude: float = round(random.uniform(2.03, 2.25), 6)
+    accuracy: float = round(random.uniform(0, 200), 5)
+    speed: float = round(random.uniform(0, 360), 3)
+    heading: float = round(random.uniform(0, 360), 5)
 
-    locationSeed = Location(
-        latitude = latitude,
-        longitude = longitude,
-        accuracy = accuracy,
-        speed = speed,
-        heading = heading
+    location_seed = Location(
+        latitude=latitude,
+        longitude=longitude,
+        accuracy=accuracy,
+        speed=speed,
+        heading=heading,
     )
 
     async for db_session in get_db():
         async with db_session as db:
-            db.add(locationSeed)
+            db.add(location_seed)
             await db.commit()
-            await db.refresh(locationSeed) 
-    return locationSeed.id
+            await db.refresh(location_seed)
+    return location_seed.id

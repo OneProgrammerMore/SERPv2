@@ -1,10 +1,9 @@
-from fastapi import Depends, Request
+"""Database functions for access the session"""
+
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from src.configs.DBSessionManager import sessionmanager
+from src.configs.db_session_manager import sessionmanager
 
 Base = declarative_base()
 
@@ -25,7 +24,8 @@ Base = declarative_base()
 #         finally:
 #             await session.close()  # Ensure session is closed
 
+
 async def get_db():
+    """ Gets the database session"""
     async with sessionmanager.session() as session:
         yield session
-

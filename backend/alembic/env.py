@@ -1,27 +1,28 @@
-from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
-
-import src.models as models
+"""
+Configuration file for alembic package - Migrations
+"""
 
 import asyncio
-from src.configs.DBSessionManager import DATABASE_URL
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from logging.config import fileConfig
+
+from sqlalchemy import engine_from_config, pool
+from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlmodel import SQLModel
+
+from alembic import context
+from src.configs.db_session_manager import DATABASE_URL
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 
-#Set DB URL - Mgg
-#config.set_main_option("sqlalchemy.url", DATABASE_URL)
+# Set DB URL - Mgg
+# config.set_main_option("sqlalchemy.url", DATABASE_URL)
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 # print("DEBUG", DATABASE_URL )
 
- # Interpret the config file for Python logging.
+# Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -33,9 +34,8 @@ if config.config_file_name is not None:
 # target_metadata = None
 # target_metadata = models.Base.metadata
 # target_metadata = models.SQLModel.metadata
-from sqlmodel import SQLModel
-from alembic import context
-from src.models import *  # Import your SQLModel models here
+
+
 target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -89,8 +89,15 @@ def run_migrations_offline() -> None:
 #         with context.begin_transaction():
 #             context.run_migrations()
 
-#CODE Mgg*
+
+# CODE Mgg*
 def run_migrations_online():
+    """Run migrations in 'online' mode.
+
+    In this scenario we need to create an Engine
+    and associate a connection with the context.
+
+    """
     connectable = config.attributes.get("connection", None)
     if connectable is None:
         connectable = AsyncEngine(
@@ -107,12 +114,23 @@ def run_migrations_online():
     else:
         do_run_migrations(connectable)
 
+
 async def run_async_migrations(connectable):
+    """Run Async migrations in 'online' mode.
+
+    In this scenario we need to create an Engine
+    and associate a connection with the context.
+
+    """
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()
 
+
 def do_run_migrations(connection):
+    """
+    Runs the alembic migrations
+    """
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
@@ -120,7 +138,9 @@ def do_run_migrations(connection):
     )
     with context.begin_transaction():
         context.run_migrations()
-#Code Mgg* End
+
+
+# Code Mgg* End
 
 
 if context.is_offline_mode():

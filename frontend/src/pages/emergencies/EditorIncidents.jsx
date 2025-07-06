@@ -70,18 +70,18 @@ const EditorIncidents = () => {
     return [...emergenciesList].sort((a, b) => {
       // Primero ordenar por estado (activos arriba, resueltos abajo)
       if (a.status !== b.status) {
-        return a.status === 'resolved' ? 1 : -1;
+        return a.status === 'Active' ? -1 : 1;
       }
 
       // Si ambos tienen el mismo estado, ordenar por prioridad
       const priorityOrder = {
-        critical: 4,
-        high: 3,
-        medium: 2,
-        low: 1
+        Critical: 4,
+        High: 3,
+        Medium: 2,
+        Low: 1
       };
       
-      if (direction === 'asc') {
+      if (direction === 'desc') {
         return priorityOrder[a.priority] - priorityOrder[b.priority];
       }
       return priorityOrder[b.priority] - priorityOrder[a.priority];

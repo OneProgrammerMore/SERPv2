@@ -1,21 +1,23 @@
-from faker import Faker
-from src.seeders.address import address_seeder
-from src.seeders.location import location_seeder
-from src.models.resource import Resource, ResourceStatusEnum, ResourceTypeEnum
-import enum
+"""
+Seeder to create resources randomly
+"""
+
 import random
 
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from faker import Faker
 
 from src.configs.database import get_db
-
-
+from src.models.resource import Resource, ResourceStatusEnum, ResourceTypeEnum
+from src.seeders.address import address_seeder
+from src.seeders.location import location_seeder
 
 RESOURCE_TYPES = ["ambulance", "firetruck", "police"]
 
+
 async def resource_seeder():
-    
+    """
+    Creates a random resource and returns it
+    """
     fake = Faker()
     name = random.choice(RESOURCE_TYPES) + "-" + str(random.randint(100, 999))
     resource_type = random.choice(list(ResourceTypeEnum))
@@ -27,30 +29,26 @@ async def resource_seeder():
     normal_location = await location_seeder()
 
     status = random.choice(list(ResourceStatusEnum))
-    responsible =  fake.first_name() + " " + fake.last_name()
+    responsible = fake.first_name() + " " + fake.last_name()
     telephone = fake.phone_number()
     email = f"{fake.first_name()}{fake.last_name()}@mail.com"
 
-    resourceSeed = Resource(
-        name = name,
-        resource_type = resource_type,
-
-        actual_address = actual_address,
-        actual_location = actual_location,
-
-        normal_address = normal_address,
-        normal_location = normal_location,
-
-        status = status,
-        responsible = responsible,
-        telephone = telephone,
-        email = email
+    resource_seed = Resource(
+        name=name,
+        resource_type=resource_type,
+        actual_address=actual_address,
+        actual_location=actual_location,
+        normal_address=normal_address,
+        normal_location=normal_location,
+        status=status,
+        responsible=responsible,
+        telephone=telephone,
+        email=email,
     )
     async for db_session in get_db():
         async with db_session as db:
-            db.add(resourceSeed)
+            db.add(resource_seed)
             await db.commit()
-            await db.refresh(resourceSeed) 
+            await db.refresh(resource_seed)
 
-
-    return resourceSeed
+    return resource_seed

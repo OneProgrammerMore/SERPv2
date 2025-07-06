@@ -1,50 +1,15 @@
-# from sqlalchemy import Column, String, Enum, Integer, Float, ForeignKey, DateTime, func
-# from sqlalchemy.dialects.postgresql import UUID
-# import enum
-# from src.configs.database import Base
-# import uuid
+"""Location DB Table for SERP"""
 
-# class Location(Base):
-#     __tablename__ = "locations"
-
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-
-#     latitude = Column(Float, nullable=False)
-#     longitude = Column(Float, nullable=False)
-#     accuracy = Column(Float, nullable=True)
-#     speed = Column(Float, nullable=True)
-#     heading = Column(Float, nullable=True)
-
-#     time_created = Column(DateTime(timezone=True), server_default=func.now())
-#     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
-
-from sqlalchemy import Column, Float, DateTime, func
-# from sqlalchemy.dialects.postgresql import UUID
 import uuid as uuid_pkg
-from src.configs.database import Base
-from typing import Optional
 from datetime import datetime
-from sqlmodel import Field, Session, SQLModel, create_engine, select
-# from uuid import uuid4, UUID
+from typing import Optional
 
-# class Location(SQLModel, table=True):
-#     __tablename__ = "locations"
+from sqlalchemy import Column, DateTime, Float, func
+from sqlmodel import Field, SQLModel
 
-#     # id: uuid.UUID = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-#     id: UUID = Field(default=uuid4, primary_key=True)
-#     latitude: float = Column(Float, nullable=False)
-#     longitude: float = Column(Float, nullable=False)
-#     accuracy: Optional[float] = Column(Float, nullable=True)
-#     speed: Optional[float] = Column(Float, nullable=True)
-#     heading: Optional[float] = Column(Float, nullable=True)
-
-#     time_created: datetime = Column(DateTime(timezone=True), server_default=func.now())
-#     time_updated: Optional[datetime] = Column(DateTime(timezone=True), onupdate=func.now())
 
 class Location(SQLModel, table=True):
-    # __tablename__ = "locations"
-
-    # id: uuid.UUID = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    """Location SQLModel For FastAPI"""
     id: uuid_pkg.UUID = Field(
         default_factory=uuid_pkg.uuid4,
         primary_key=True,
@@ -57,5 +22,9 @@ class Location(SQLModel, table=True):
     speed: Optional[float] = Field(sa_column=Column(Float, nullable=True))
     heading: Optional[float] = Field(sa_column=Column(Float, nullable=True))
 
-    time_created: datetime = Field(sa_column=Column(DateTime(timezone=True), server_default=func.now()))
-    time_updated: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), onupdate=func.now()))
+    time_created: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+    )
+    time_updated: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now())
+    )

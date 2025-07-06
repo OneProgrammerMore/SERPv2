@@ -515,7 +515,9 @@ const EmergencyOperatorDashboard = () => {
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label="Emergencies" />
             <Tab label="Resources" />
+            {/*
             <Tab label="Alerts" />
+            */}
           </Tabs>
           
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -560,7 +562,8 @@ const EmergencyOperatorDashboard = () => {
                 {filteredEmergencies.length === 0 ? (
                   <Alert severity="info">No found emergencies</Alert>
                 ) : (
-                  filteredEmergencies.map(emergency => (
+                  filteredEmergencies.filter( emergency => emergency.status != "Solved" && emergency.status != "Archived")
+                  .map(emergency => (
                     <EmergencyCard 
                       key={emergency.id}
                       emergency={emergency}
