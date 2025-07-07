@@ -43,11 +43,13 @@ class Emergency(SQLModel, table=True):
         index=True,
         nullable=False,
     )
+
     name: str = Field(sa_column=Column(String(64), nullable=False))
     description: str = Field(sa_column=Column(String(512), nullable=False))
     priority: PriorityType = Field(
         sa_column=Column(Enum(PriorityType), default=PriorityType.MEDIUM)
     )
+
     emergency_type: EmergencyType = Field(
         sa_column=Column(Enum(EmergencyType), default=EmergencyType.OTHER)
     )
@@ -65,6 +67,7 @@ class Emergency(SQLModel, table=True):
     resource_id: Optional[uuid_pkg.UUID] = Field(
         default=None, foreign_key="resource.id", ondelete="SET NULL"
     )
+    
     location_resource: Optional[uuid_pkg.UUID] = Field(
         default=None, foreign_key="location.id", ondelete="SET NULL"
     )

@@ -6,9 +6,9 @@ import random
 
 from src.configs.database import get_db
 from src.models.location import Location
+import uuid as uuid_pkg
 
-
-async def location_seeder():
+async def location_seeder()->uuid_pkg.UUID:
     """
     Creates a localtion in the database and returns its ID
     """

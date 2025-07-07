@@ -5,7 +5,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 
 async function fetchEmergenciesAPICall () {
-  const endpoint = API_URL + '/api/alerts'
+  const endpoint = API_URL + '/api/emergencies'
   try{
     const response = await fetch(endpoint, {
       method: 'GET', // or 'PUT'
@@ -27,36 +27,6 @@ async function fetchEmergenciesAPICall () {
   };
 }
 
-// Thunks
-// export const fetchEmergencies = createAsyncThunk(
-//   'emergencies/fetchEmergencies',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       // const response = await axios.get(`${API_URL}/emergencies`);
-//       // return response.data;
-//       const data = fetchEmergenciesAPICall();
-//       return data;
-//     } catch (error) {
-//       return rejectWithValue(error.response.data);
-//     }
-//   }
-// );
-
-
-// export const fetchEmergencies = createAsyncThunk(
-//   'emergencies/fetchEmergencies',
-//   async (_ , thunkAPI) => {
-//     try {
-//       // const response = await axios.get(`${API_URL}/emergencies`);
-//       // return response.data;
-//       const data = fetchEmergenciesAPICall();
-//       return data;
-//     } catch (error) {
-//       return thunkAPI.rejectWithValue(error.response.data);
-//     }
-//   }
-// );
-
 export const fetchEmergencies = createAsyncThunk(
   'emergencies/fetchEmergencies',
   async () => {
@@ -71,7 +41,7 @@ export const fetchEmergencies = createAsyncThunk(
 );
 
 const createEmergencyAPICall = async(newIncident) => {
-  const endpoint = API_URL + '/api/alerts'
+  const endpoint = API_URL + '/api/emergencies'
   const response = await fetch(endpoint, {
     method: 'POST', // or 'PUT'
     headers: {
@@ -99,7 +69,7 @@ export const createEmergency = createAsyncThunk(
 
 const updateEmergencyAPICall = async (emergencyID, emergencyData) =>{
 
-  const endpoint = API_URL + '/api/alerts/' + emergencyID;
+  const endpoint = API_URL + '/api/emergencies/' + emergencyID;
   console.log("API ENDPOINT = ", endpoint);
   console.log("Data = ", emergencyData);
 
@@ -120,8 +90,6 @@ export const updateEmergency = createAsyncThunk(
   'emergencies/updateEmergency',
   async ({ id, updatedEmergency }, { rejectWithValue }) => {
     try {
-      // const response = await axios.put(`${API_URL}/emergencies/${id}`, emergencyData);
-      // return response.data;
       console.log("id", id)
       console.log("Data = ", updatedEmergency);
       const response = await  updateEmergencyAPICall(id, updatedEmergency);
@@ -135,7 +103,7 @@ export const updateEmergency = createAsyncThunk(
 
 const deleteEmergencyAPICall = async (emergencyID) => {
 
-  const endpoint = API_URL + '/api/alerts/' + emergencyID;
+  const endpoint = API_URL + '/api/emergencies/' + emergencyID;
   const response = await fetch(endpoint, {
     method: 'DELETE',
     headers: {
@@ -151,8 +119,6 @@ export const deleteEmergency = createAsyncThunk(
   'emergencies/deleteEmergency',
   async (id, { rejectWithValue }) => {
     try {
-      // await axios.delete(`${API_URL}/emergencies/${id}`);
-      // return id;
       const response = await deleteEmergencyAPICall(id);
       return response;
 
@@ -181,7 +147,7 @@ const assignResourcesToEmergencyAPICall = async (emergencyID, resources) => {
   console.log("resources: ", resources);
       console.log("emergencyID ", emergencyID);
 
-  const endpoint = API_URL + '/api/alerts/' + emergencyID + '/assign' 
+  const endpoint = API_URL + '/api/emergencies/' + emergencyID + '/assign' 
   const response = await fetch(endpoint, {
     method: 'POST', // or 'PUT'
     headers: {
@@ -205,8 +171,6 @@ export const assignResourcesToEmergency = createAsyncThunk(
   'emergencies/assignResourcesToEmergency',
   async ({ emergencyID, selectedResources }, { rejectWithValue }) => {
     try {
-      // const response = await axios.post(`${API_URL}/emergencies/${emergencyId}/assign-resources`, { resourceIds });
-      // return response.data;
       console.log("selectedResources: ", selectedResources);
       console.log("emergencyID ", emergencyID);
       const response = await assignResourcesToEmergencyAPICall(emergencyID, selectedResources);
@@ -260,13 +224,13 @@ const emergenciesSlice = createSlice({
       })
       // Actualizar emergencia
       .addCase(updateEmergency.fulfilled, (state, action) => {
-        //const index = state.emergencies.findIndex(e => e.id === action.payload.id);
-        // if (index !== -1) {
-        //   state.emergencies[index] = action.payload;
-        // }
-        // if (state.activeEmergency?.id === action.payload.id) {
-        //   state.activeEmergency = action.payload;
-        // }
+        const index = state.emergencies.findIndex(e => e.id === action.payload.id);
+        if (index !== -1) {
+          state.emergencies[index] = action.payload;
+        }
+        if (state.activeEmergency?.id === action.payload.id) {
+          state.activeEmergency = action.payload;
+        }
       })
       // Eliminar emergencia
       .addCase(deleteEmergency.fulfilled, (state, action) => {

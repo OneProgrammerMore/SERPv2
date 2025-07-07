@@ -11,17 +11,20 @@ from fastapi.middleware.cors import CORSMiddleware
 #from src.configs.config import settings
 
 # Config DB
-from src.configs.db_session_manager import sessionmanager
+from src.configs.database import sessionmanager
 from src.routes import emergencies, location, qosod, resources
 
 # Seed DB
 from src.seeders.main import seed_db
 
+# Convert string env var to boolean
+def str_to_bool(s):
+    return s.lower() in ['true', 'True', 'TRUE', '1', 'yes']
+
+
 # Configuración de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# app = FastAPI(title="SERP Backend API")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,7 +32,7 @@ async def lifespan(app: FastAPI):
     # Initialize the DatabaseSessionManager
     await sessionmanager.create_db_and_tables()
     # Seed Database for Demo
-    if "SEED_DB_DEMO" in os.environ and os.environ["SEED_DB_DEMO"] == True:
+    if "SEED_DB_DEMO" in os.environ and str_to_bool(os.environ["SEED_DB_DEMO"]):
         await seed_db()
     
     yield

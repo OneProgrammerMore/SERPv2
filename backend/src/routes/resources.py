@@ -2,9 +2,9 @@
 Routes for resources CRUD and more related to resources Model
 """
 
-from typing import Annotated, Optional
+from typing import Annotated, Optional, List, Any
 
-from fastapi import (  # type: ignore No warning about pydantic. Imported in requirements.txt
+from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
@@ -12,6 +12,7 @@ from fastapi import (  # type: ignore No warning about pydantic. Imported in req
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Mapped
 
 from src.configs.database import get_db
 from src.models.address import Address
@@ -21,40 +22,12 @@ from src.models.location import Location
 from src.models.resource import Resource, ResourceStatusEnum, ResourceTypeEnum
 
 from src.services.helpers import convertStringToUUID
-
+import uuid as uuid_pkg
 
 router = APIRouter()
 
 
-# LIST ALL RESOURCES
-# @router.get("/api/devices", response_model=List[Resource], tags=["Devices"])
-@router.get("/api/devices", tags=["Devices"])
-async def list_devices(session: Annotated[AsyncSession, Depends(get_db)]):
-    """List all devices"""
-    # resources = await session.execute(select(Resource))
-    # items = resources.scalars().all()
-    # return items
-
-    resources = await session.execute(
-        select(Resource, Location).join(
-            Location, Location.id == Resource.actual_location
-        )
-    )
-    result = resources.all()
-    resources_with_location = []
-    for resource, actual_location in result:
-        print("DEBUG LOCATION RESOURCE", actual_location)
-        resources_with_location.append(
-            {
-                **resource.model_dump(),
-                "location_resource_data": actual_location.model_dump(),
-            }
-        )
-    return resources_with_location
-
-
-# CREATE A RESOURCE
-class ResourceCreateRequest(BaseModel):
+class ResourceModel(BaseModel):
     """Base Model For Input/Http Request Validation"""
 
     name: Optional[str] = Field(None, max_length=128)
@@ -74,14 +47,50 @@ class ResourceCreateRequest(BaseModel):
     responsible: Optional[str] = Field(None, max_length=128)
     telephone: Optional[str] = Field(None, max_length=128)
     email: Optional[str] = Field(None, max_length=128)
+    
+
+class ResourcesWithLocationModel(ResourceModel):
+    """Base Model For Output/Http Response Validation"""
+    id: uuid_pkg.UUID
+    location_resource_data: Optional[Location]
+
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
+
+# LIST ALL RESOURCES
+# @router.get("/api/devices", response_model=List[Resource], tags=["Devices"])
+@router.get("/api/resources", tags=["Resources"], response_model=List[ResourcesWithLocationModel])
+async def list_devices(session: Annotated[AsyncSession, Depends(get_db)])->List[ResourcesWithLocationModel]:
+    """List all devices"""
+    
+    resources = await session.execute(
+        select(Resource, Location).join(
+            Location, Location.id == Resource.actual_location
+        )
+    )
+    result = resources.all()
+    new_resources = []
+
+    for resource, location in result:
+        resourceWithLocation = ResourcesWithLocationModel(
+            **resource.model_dump(),
+            location_resource_data=location
+        )
+        new_resources.append(resourceWithLocation)
+
+    return new_resources    
+
+
 
 
 #@router.post("/api/devices", response_model=Resource, status_code=201, tags=["Devices"])
-@router.post("/api/devices", status_code=201, tags=["Devices"])
+@router.post("/api/resources", status_code=201, tags=["Resources"])
 async def create_device(
     db: Annotated[AsyncSession, Depends(get_db)],
-    request: ResourceCreateRequest,
-):
+    request: ResourceModel,
+)-> dict[str, str | uuid_pkg.UUID ]:
     """Create a new device/resource"""
     async with db.begin():  # Ensures rollback on failure
         actual_location = Location(
@@ -127,22 +136,22 @@ async def create_device(
             email=request.email,
         )
         db.add(resource)
-        # await db.flush()  # Get product.id before committing
+        
         resource_id = resource.id
 
     await db.commit()
 
     return {"message": "Resource Created", "resouce_id:": resource_id}
-    # return resource
+    
 
 
 # READ A RESOURCE
 @router.get(
-    "/api/devices/{resource_id}", response_model=Resource, tags=["Devices"]
+    "/api/resources/{resource_id}", response_model=Resource, tags=["Resources"]
 )
 async def get_device(
     db: Annotated[AsyncSession, Depends(get_db)], resource_id: str
-):
+)->Resource:
     """Get device/resource details"""
 
     resource_uuid = convertStringToUUID(resource_id)
@@ -155,35 +164,16 @@ async def get_device(
     return resource
 
 
-# UPDATE A RESOURCE
-class ResourceUpdateRequest(BaseModel):
-    """Class to specify the validator for updating/modifiying a resource"""
-    resource_type: Optional[str] = Field(None, max_length=128)
-
-    actual_address_longitude: Optional[float] = Field(None, ge=-180, le=180)
-    actual_address_latitude: Optional[float] = Field(None, ge=-90, le=90)
-    actual_longitude: Optional[float] = Field(None, ge=-180, le=180)
-    actual_latitude: Optional[float] = Field(None, ge=-90, le=90)
-
-    normal_address_longitude: Optional[float] = Field(None, ge=-180, le=180)
-    normal_address_latitude: Optional[float] = Field(None, ge=-90, le=90)
-    normal_longitude: Optional[float] = Field(None, ge=-180, le=180)
-    normal_latitude: Optional[float] = Field(None, ge=-90, le=90)
-
-    status: Optional[ResourceStatusEnum] = ResourceStatusEnum.UNKNOWN
-    responsible: Optional[str] = Field(None, max_length=128)
-    telephone: Optional[str] = Field(None, max_length=128)
-    email: Optional[str] = Field(None, max_length=128)
 
 
 # @router.patch("/api/devices/{resource_id}", response_model=Resource, tags=["Devices"])
-@router.patch("/api/devices/{resource_id}", tags=["Devices"])
+@router.patch("/api/resources/{resource_id}", tags=["Resources"])
 async def update_device(
     db: Annotated[AsyncSession, Depends(get_db)],
     resource_id: str,
-    request: ResourceUpdateRequest,
-):
-    """Update device details"""
+    request: ResourceModel,
+)-> dict[str, str | uuid_pkg.UUID ]:
+    """Update resource details"""
 
     # Find Resource
     stmt = select(Resource).where(Resource.id == resource_id)
@@ -202,7 +192,7 @@ async def update_device(
     # for field, value in model_data.dict(exclude_unset=True).items():
     for field, value in model_data.items():
         setattr(resource, field, value)
-    db.commit()
+    await db.commit()
 
     # Update Actual Location
     # Find Location
@@ -215,7 +205,7 @@ async def update_device(
         )
     actual_location.longitude = request.actual_longitude
     actual_location.latitude = request.actual_latitude
-    db.commit()
+    await db.commit()
     # Update Actual Address
     stmt = select(Address).where(Address.id == resource.actual_address)
     result = await db.execute(stmt)
@@ -226,7 +216,7 @@ async def update_device(
         )
     actual_address.longitude = request.actual_address_longitude
     actual_address.latitude = request.actual_address_latitude
-    db.commit()
+    await db.commit()
 
     # Update Normal Location
     # Find Location
@@ -239,7 +229,7 @@ async def update_device(
         )
     normal_location.longitude = request.normal_longitude
     normal_location.latitude = request.normal_latitude
-    db.commit()
+    await db.commit()
     # Update normal Address
     stmt = select(Address).where(Address.id == resource.normal_address)
     result = await db.execute(stmt)
@@ -250,13 +240,15 @@ async def update_device(
         )
     normal_address.longitude = request.normal_address_longitude
     normal_address.latitude = request.normal_address_latitude
-    db.commit()
+    await db.commit()
+
+
 
     return {"message": "Resource Updated", "resouce_id:": resource_id}
 
 
 # DELETE A RESOURCE
-@router.delete("/api/devices/{resource_id}", status_code=200, tags=["Devices"])
+@router.delete("/api/resources/{resource_id}", status_code=200, tags=["Resources"])
 async def delete_device(
     db: Annotated[AsyncSession, Depends(get_db)], resource_id: str
 ):

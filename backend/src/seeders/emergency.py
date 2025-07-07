@@ -4,6 +4,7 @@ Seeder for emergencies database model
 
 import random
 import string
+import uuid as uuid_pkg
 
 from faker import Faker
 
@@ -18,7 +19,7 @@ from src.seeders.address import address_seeder
 from src.seeders.location import location_seeder
 from src.seeders.resource import resource_seeder
 
-async def emergency_seeder():
+async def emergency_seeder()->uuid_pkg.UUID:
     """
     Creates an emergency in the database and returns its ID
     """

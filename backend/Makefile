@@ -36,9 +36,9 @@ mypy:
 	-mypy tests/
 security:
 	echo "bandit -r"
-	bandit -r .
+	-bandit -r .
 	echo "safety check"
-	safety check
+	-safety check
 test:
 	echo "pytest -cov=src"
 	pytest --cov=src

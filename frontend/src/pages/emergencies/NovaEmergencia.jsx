@@ -43,6 +43,7 @@ const NovaEmergencia = () => {
     priority: 'High',
     latitude: '',
     longitude: '',
+    telephone_contact: '',
   });
 
   const [openMap, setOpenMap] = React.useState(false);
@@ -90,6 +91,7 @@ const NovaEmergencia = () => {
           priority: 'High',
           latitude: '',
           longitude: '',
+          telephone_contact: '',
         });
         // Ocultar el mensaje después de 3 segundos
         setTimeout(() => {
@@ -115,6 +117,7 @@ const NovaEmergencia = () => {
       latitude: '',
       longitude: '',
       // selectedResource: ''
+      telephone_contact: ''
     });
   };
 

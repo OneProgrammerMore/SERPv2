@@ -76,4 +76,6 @@ testpaths = ["tests"]
 [tool.bandit]
 skips = ["B101"]  # Optional: skip assert usage warning
 
+[tool.coverage.run]
+source = ['src']
 

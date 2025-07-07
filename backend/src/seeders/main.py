@@ -5,7 +5,7 @@ Main seeding functions
 from src.seeders.emergency import emergency_seeder
 
 
-async def seed_db():
+async def seed_db() -> None:
     """
     Seeds the database
     """

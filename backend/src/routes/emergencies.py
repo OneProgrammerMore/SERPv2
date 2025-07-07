@@ -1,7 +1,7 @@
 """Routes for emergencies CRUD and more"""
 
 import uuid as uuid_pkg
-from typing import Annotated, Optional
+from typing import Annotated, Optional, List
 
 from fastapi import (
     APIRouter,
@@ -15,6 +15,7 @@ from pydantic import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Mapped
 
 from src.configs.database import get_db
 from src.models.address import Address
@@ -25,34 +26,16 @@ from src.models.emergency import (
     StatusType,
 )
 
+from datetime import datetime
+from sqlalchemy.orm import selectinload
+
 from src.models.emergencyresourceslink import EmergencyResourceLink
 from src.models.location import Location
 from src.models.resource import Resource, ResourceStatusEnum
 
+from src.services.helpers import convertStringToUUID
+
 router = APIRouter()
-
-#@router.get("/api/alerts", response_model=List[Emergency], tags=["Alerts"])
-@router.get("/api/alerts", tags=["Alerts"])
-async def list_alerts(session: Annotated[AsyncSession, Depends(get_db)]):
-    """List all emergencies/alerts"""
-
-    emergencies = await session.execute(
-        select(Emergency, Location).join(
-            Location, Location.id == Emergency.location_emergency
-        )
-    )
-    result = emergencies.all()
-    emergencies_with_location = []
-    for emergency, location_emergency in result:
-        # print("DEBUG LOCATION EMERGENCY", location_emergency)
-        emergencies_with_location.append(
-            {
-                **emergency.model_dump(),
-                "location_emergency_data": location_emergency.model_dump(),
-            }
-        )
-    return emergencies_with_location
-
 
 class EmergencyRequest(BaseModel):
     """Model for input/request of create a new emergency endpoint"""
@@ -66,58 +49,6 @@ class EmergencyRequest(BaseModel):
     name_contact: Optional[str] = None
     telephone_contact: Optional[str] = None
     id_contact: Optional[str] = None
-
-
-@router.post(
-    "/api/alerts", response_model=Emergency, status_code=201, tags=["Alerts"]
-)
-async def create_alert(
-    request: EmergencyRequest, db: AsyncSession = Depends(get_db)
-):
-    """[CREATE EMERGENCY] - Create a new emergency/alert"""
-    async with db.begin():  # Ensures rollback on failure
-        location = Location(
-            latitude=request.latitude, longitude=request.longitude
-        )
-        db.add(location)
-        await db.flush()
-
-        address = Address(
-            latitude=request.latitude, longitude=request.longitude
-        )
-        db.add(address)
-        await db.flush()
-
-        emergency = Emergency(
-            name=request.name,
-            description=request.description,
-            location_emergency=location.id,
-            address_emergency=address.id,
-            priority=request.priority,
-            status=request.status,
-            name_contact=request.name_contact,
-            telephone_contact=request.telephone_contact,
-            id_contact=request.id_contact,
-        )
-        db.add(emergency)
-        e_id = emergency.id
-
-    await db.commit()
-
-    return {"message": "Alert Created", "alert_id": e_id}
-
-
-# READ EMERGENCY
-# @router.get("/api/alerts/{alert_id}", response_model=Emergency, tags=["Alerts"])
-@router.get("/api/alerts/{alert_id}", tags=["Alerts"])
-async def get_alert(alert_id: str, db: AsyncSession = Depends(get_db)):
-    """[READ EMERGENCY] - Get emergency/alert details"""
-    stmt = select(Emergency).where(Emergency.id == alert_id)
-    result = await db.execute(stmt)
-    emergency = result.scalar_one_or_none()
-    if emergency is None:
-        raise HTTPException(status_code=404, detail="Emergency not found")
-    return emergency
 
 
 # UPDATE EMERGENCY
@@ -144,18 +75,147 @@ class EmergencyUpdateRequest(BaseModel):
     telephone_contact: Optional[str] = None
     id_contact: Optional[str] = None
 
+class EmergencyModelResponse(BaseModel):
+    """
+    Model to return as Emergency Model
+    """
+    id: uuid_pkg.UUID
+
+    name: str
+    description: str
+    priority: PriorityType
+
+    emergency_type: EmergencyType
+    status: StatusType
+    location_emergency: Optional[uuid_pkg.UUID]
+    address_emergency: Optional[uuid_pkg.UUID]
+
+    resource_id: Optional[uuid_pkg.UUID]
+    location_resource: Optional[uuid_pkg.UUID]
+    address_resource: Optional[uuid_pkg.UUID]
+
+    destination_id: Optional[uuid_pkg.UUID]
+    
+    location_destination: Optional[uuid_pkg.UUID]
+    address_destination: Optional[uuid_pkg.UUID]
+
+    name_contact: Optional[str]
+    telephone_contact: Optional[str]
+    id_contact: Optional[str]
+
+    time_created: datetime
+    time_updated: Optional[datetime]
+
+
+class EmergencyWithResourcesModelResponse(EmergencyModelResponse):
+    resources: List[uuid_pkg.UUID]
+    #model_config = ConfigDict(from_attributes=True)
+    
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "from_attributes": True
+    }
+
+
+class EmergencyWithLocationModelResponse(EmergencyModelResponse):
+    location_emergency_data: Optional[Location]
+    
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
+@router.get("/api/emergencies", response_model=List[EmergencyWithLocationModelResponse] ,tags=["Emergencies"])
+async def list_alerts(session: Annotated[AsyncSession, 
+    Depends(get_db)]
+) -> List[EmergencyWithLocationModelResponse]:
+    """List all emergencies"""
+
+    emergencies = await session.execute(
+        select(Emergency, Location).join(
+            Location, Location.id == Emergency.location_emergency
+        )
+    )
+    result = emergencies.all()
+    emergencies_with_location = []
+    for emergency, location in result:
+        emergencyWithLocation = EmergencyWithLocationModelResponse(
+            **emergency.model_dump(),
+            location_emergency_data=location
+        )
+        emergencies_with_location.append(emergencyWithLocation)
+
+    return emergencies_with_location
+
+class MessageResponse(BaseModel):
+    message: str
+    emergency_id: str
+
+
+@router.post(
+    "/api/emergencies", response_model=MessageResponse, status_code=201, tags=["Emergencies"]
+)
+async def create_alert(
+    request: EmergencyRequest, db: AsyncSession = Depends(get_db)
+) -> MessageResponse:
+    """
+    Create a new emergency
+    """
+    async with db.begin():  # Ensures rollback on failure
+        location = Location(
+            latitude=request.latitude, longitude=request.longitude
+        )
+        db.add(location)
+        await db.flush()
+
+        address = Address(
+            latitude=request.latitude, longitude=request.longitude
+        )
+        db.add(address)
+        await db.flush()
+
+        emergency = Emergency(
+            name=request.name,
+            description=request.description,
+            location_emergency=location.id,
+            address_emergency=address.id,
+            priority=request.priority,
+            status=request.status,
+            name_contact=request.name_contact,
+            telephone_contact=request.telephone_contact,
+            id_contact=request.id_contact,
+        )
+        db.add(emergency)
+        emergency_id = emergency.id
+
+    await db.commit()
+
+    return {"message": "Emergency Created", "emergency_id": str(emergency_id)}
+
+
+# READ EMERGENCY
+@router.get("/api/emergencies/{emergency_id}", response_model=EmergencyModelResponse, tags=["Emergencies"])
+async def get_alert(emergency_id: str, db: AsyncSession = Depends(get_db))->EmergencyModelResponse:
+    """Get emergency details"""
+    stmt = select(Emergency).where(Emergency.id == emergency_id)
+    result = await db.execute(stmt)
+    emergency = result.scalar_one_or_none()
+    if emergency is None:
+        raise HTTPException(status_code=404, detail="Emergency not found")
+    return emergency
+
+
 
 @router.patch(
-    "/api/alerts/{alert_id}", response_class=ORJSONResponse, tags=["Alerts"]
+    "/api/emergencies/{emergency_id}", response_model=MessageResponse, tags=["Emergencies"]
 )
 async def update_alert(
-    alert_id: str,
+    emergency_id: str,
     request: EmergencyUpdateRequest,
     db: AsyncSession = Depends(get_db),
-):
-    """Update an alert"""
+)->MessageResponse:
+    """Update an emergency"""
 
-    stmt = select(Emergency).where(Emergency.id == alert_id)
+    stmt = select(Emergency).where(Emergency.id == emergency_id)
     result = await db.execute(stmt)
     emergency = result.scalars().first()
     if not emergency:
@@ -191,14 +251,18 @@ async def update_alert(
         return response
 
     # return {"message": "Emergency updated", "emergecy_id": emergency.id}
-    return [{"emergecy_id": str(emergency.id), "message": "Updated"}]
+    return {"message": "Updated", "emergency_id": str(emergency.id)}
 
+
+
+class MessageDeleteResponse(BaseModel):
+    message: str
 
 # DELETE A EMERGENCY
-@router.delete("/api/alerts/{emergency_id}", status_code=200, tags=["Alerts"])
+@router.delete("/api/emergencies/{emergency_id}", response_model=MessageDeleteResponse, status_code=200, tags=["Emergencies"])
 async def delete_device(
     db: Annotated[AsyncSession, Depends(get_db)], emergency_id: str
-):
+)->MessageDeleteResponse:
     """Delete an emergency"""
 
     try:
@@ -221,70 +285,161 @@ async def delete_device(
 
 # @router.get("/api/devices/{resource_id}/assignments",
 # response_model=List[Emergency], tags=["Alerts"])
-@router.get("/api/devices/{resource_id}/assignments", tags=["Alerts"])
+@router.get("/api/resources/{resource_id}/assignments",response_model=List[EmergencyModelResponse] , tags=["Resources"])
 async def get_device_assignments(
-    resource_id: str, session: AsyncSession = Depends(get_db)
-):
-    """Get resources assigned to a specific emergency"""
+    resource_id: uuid_pkg.UUID, session: AsyncSession = Depends(get_db)
+)->List[EmergencyModelResponse]:
+    """Get emergency assigned to a specific resource"""
 
     stmt = select(Resource).where(Resource.id == resource_id)
     result = await session.execute(stmt)
     if not result:
         raise HTTPException(status_code=404, detail="Example not found")
     resource = result.unique().scalar_one()
+    
+    # return resource.emergencies
+    
+    emergencies_for_resource = []
 
-    return resource.emergencies
-
+    for emergency in resource.emergencies:
+        emergencies_for_resource.append(
+            EmergencyModelResponse(
+                **emergency.model_dump()
+            )
+        )
+    return emergencies_for_resource
+    
 
 class EmergencyAssignResourcesRequest(BaseModel):
     """Input for assing resources to emergency endpoint"""
-    resourcesIDs: list[uuid_pkg.UUID]
+    resourcesIDs: List[uuid_pkg.UUID]
 
 
-# Assign resources to emergency by ID
-@router.post("/api/alerts/{emergency_id}/assign", tags=["Alerts"])
+# # Assign resources to emergency by ID
+# @router.post("/api/alerts/{emergency_id}/assign", response_model=EmergencyModelResponse, tags=["Alerts"])
+# async def add_device_assignments(
+#     emergency_id: uuid_pkg.UUID,
+#     request: EmergencyAssignResourcesRequest,
+#     session: AsyncSession = Depends(get_db),
+# )->EmergencyModelResponse:
+#     """Get alerts assigned to a specific device"""
+
+#     # Select Emergency From Database By emergency_id
+#     #stmt = select(Emergency).where(Emergency.id == str(emergency_id))
+#     stmt = select(Emergency).options(selectinload(Emergency.resources)).where(Emergency.id == emergency_id)
+#     result = await session.execute(stmt)
+#     await session.flush() 
+#     # if not result:
+#     #     raise HTTPException(status_code=404, detail="Example not found")
+#     emergency = result.unique().scalar_one_or_none()
+#     if emergency is None:
+#         raise HTTPException(status_code=404, detail="Example not found")
+
+#     # Clean Old Resources Status to Available
+#     for resource in emergency.resources:
+#         #stmt = select(Resource).where(Resource.id == resource.id)
+#         #result = await session.execute(stmt)
+#         #resource = result.scalar_one_or_none()
+#         #if resource is None:
+#         #    raise HTTPException(status_code=404, detail="Resource not found")
+        
+#         resource.status = ResourceStatusEnum.AVAILABLE
+#         session.add(resource)
+#     await session.commit()
+
+#     # Select Assigned Resources From Database and add to db_resources var
+#     db_resources = []
+#     print("request.resourcesIDS - here", request.resourcesIDs)
+#     for resource_id in request.resourcesIDs:
+#     #for resource_id in request.EmergencyAssignResourcesRequest.resourcesIDs:
+#         stmt = select(Resource).where(Resource.id == resource_id)
+#         result = await session.execute(stmt)
+#         resource = result.scalar_one_or_none()
+#         if resource is None:
+#             raise HTTPException(status_code=404, detail="Resource not found")
+        
+#         resource.status = ResourceStatusEnum.BUSY
+#         session.add(resource)
+#         db_resources.append(resource)
+#     # await session.commit()
+#     # for resource in db_resources:
+#     #     await session.refresh(resource)
+
+#     # await session.flush() 
+
+#     print("db_resources - here2", db_resources)
+#     print("db_resources - here2", db_resources)
+#     # Add assigned resources to emergency in the many to many table
+#     result = await session.exec(
+#         select(Emergency).options(selectinload(Emergency.resources)).where(Emergency.id == emergency_id)
+#     )
+#     emergency = result.one()
+
+#     emergency.resources = db_resources
+#     session.add(emergency)
+#     await session.commit()
+#     # Refresh the emergency model to return
+#     await session.refresh(emergency)
+
+#     emergency_response = EmergencyModelResponse(
+#         **emergency.model_dump()
+#     )
+    
+#     return emergency_response
+
+@router.post("/api/emergencies/{emergency_id}/assign", response_model=MessageResponse, tags=["Emergencies"])
 async def add_device_assignments(
-    emergency_id: str,
+    emergency_id: uuid_pkg.UUID,
     request: EmergencyAssignResourcesRequest,
     session: AsyncSession = Depends(get_db),
-):
-    """Get alerts assigned to a specific device"""
+) -> MessageResponse:
+    """Assign resources to an emergency."""
 
-    # Select Emergency From Database By emergency_id
-    stmt = select(Emergency).where(Emergency.id == emergency_id)
+    # Fetch the emergency with its resources in one query
+    stmt = select(Emergency).options(selectinload(Emergency.resources)).where(Emergency.id == emergency_id)
     result = await session.execute(stmt)
-    if not result:
-        raise HTTPException(status_code=404, detail="Example not found")
-    emergency = result.unique().scalar_one()
+    emergency = result.unique().scalar_one_or_none()
 
-    # Clean Old Resources Status to Available
+    if emergency is None:
+        raise HTTPException(status_code=404, detail="Emergency not found")
+
+    # Reset existing resources to AVAILABLE
     for resource in emergency.resources:
-        stmt = select(Resource).where(Resource.id == resource.id)
-        result = await session.execute(stmt)
-        if not result:
-            raise HTTPException(status_code=404, detail="Resource not found")
-        resource = result.scalar_one()
         resource.status = ResourceStatusEnum.AVAILABLE
         session.add(resource)
 
-    # Select Assigned Resources From Database and add to db_resources var
+    # Fetch and update new resources
     db_resources = []
     for resource_id in request.resourcesIDs:
         stmt = select(Resource).where(Resource.id == resource_id)
         result = await session.execute(stmt)
-        if not result:
-            raise HTTPException(status_code=404, detail="Resource not found")
-        resource = result.scalar_one()
+        resource = result.scalar_one_or_none()
+        if resource is None:
+            raise HTTPException(status_code=404, detail=f"Resource {resource_id} not found")
+        
         resource.status = ResourceStatusEnum.BUSY
         session.add(resource)
         db_resources.append(resource)
-    session.commit()
 
-    # Add assigned resources to emergency in the many to many table
+    # Update the many-to-many relationship
     emergency.resources = db_resources
+
+    # Commit all changes in one transaction
     session.add(emergency)
     await session.commit()
-    # Refresh the emergency model to return
-    await session.refresh(emergency)
 
-    return emergency
+    # Refresh the emergency to ensure the response includes updated data
+    await session.refresh(emergency, attribute_names=["resources"])
+
+    # Create response model (avoid model_dump() if it causes issues)
+    #emergency_response = EmergencyModelResponse.from_orm(emergency)
+    # emergency_response = EmergencyWithResourcesModelResponse.from_orm(emergency)
+    
+    # emergency_response = EmergencyWithResourcesModelResponse(
+    #     **emergency.model_dump()
+    # )
+
+    #print("emergency_response",emergency_response)
+
+    #return emergency_response
+    return {"message": "Updated", "emergency_id": str(emergency_id)}

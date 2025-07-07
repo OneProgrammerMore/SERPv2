@@ -3,9 +3,10 @@ Helper functions for reuse.
 """
 
 import uuid as uuid_pkg
+from fastapi import HTTPException
 
 
-def convert_string_to_uuid(id_str):
+def convert_string_to_uuid(id_str: str) -> uuid_pkg.UUID:
     """
     Converts string to uuid
     """

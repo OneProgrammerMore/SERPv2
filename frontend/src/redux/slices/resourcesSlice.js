@@ -4,7 +4,7 @@ import axios from 'axios';
 const API_URL = process.env.REACT_APP_API_URL;
 
 const fetchResourcesAPICall = async ()  => {
-  const endpoint = API_URL + '/api/devices'
+  const endpoint = API_URL + '/api/resources'
   
   try {
       
@@ -36,8 +36,6 @@ export const fetchResources = createAsyncThunk(
   'resources/fetchResources',
   async (_, { rejectWithValue }) => {
     try {
-      //const response = await axios.get(`${API_URL}/resources`);
-      // return response.data;
       const data = await fetchResourcesAPICall();
       return data;
   
@@ -50,7 +48,7 @@ export const fetchResources = createAsyncThunk(
 
 
 const fetchResourcesWithAssignmentsAPICall = ()  => {
-  const endpoint = API_URL + '/api/devices'
+  const endpoint = API_URL + '/api/resources'
 
   const response = fetch(endpoint, {
     method: 'GET', // or 'PUT'
@@ -65,7 +63,7 @@ const fetchResourcesWithAssignmentsAPICall = ()  => {
 const fetchAssignmentsAPICall = async (resources) => {
   let endpoint = ''
   for (const resource of resources){
-    endpoint = API_URL + '/api/devices/' + resource.id + '/assignments'
+    endpoint = API_URL + '/api/resources/' + resource.id + '/assignments'
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -93,8 +91,6 @@ export const fetchResourcesWithAssignments = createAsyncThunk(
   'resources/fetchResourcesWithAssigments',
   async (_, { rejectWithValue }) => {
     try {
-      //const response = await axios.get(`${API_URL}/resources`);
-      // return response.data;
       const response = await fetchResourcesWithAssignmentsAPICall();
 
       if(!response.ok){
@@ -120,7 +116,7 @@ export const fetchResourcesWithAssignments = createAsyncThunk(
 
 
 const createResourceAPICall = async(newResource) =>{
-  const endpoint = API_URL + '/api/devices'
+  const endpoint = API_URL + '/api/resources'
 
   const response = await fetch(endpoint, {
     method: 'POST', // or 'PUT'
