@@ -142,6 +142,33 @@ export const createResource = createAsyncThunk(
   }
 );
 
+const editResourceAPICall = async(editedResource, resourceID) =>{
+  const endpoint = API_URL + '/api/resources/'+resourceID
+
+  const response = await fetch(endpoint, {
+    method: 'PATCH', // or 'PUT'
+    headers: {
+      "Content-type": "application/json"
+    },
+    body: JSON.stringify(editedResource),
+  })
+
+  return response;
+}
+
+
+export const editResource = createAsyncThunk(
+  'resources/edit',
+  async ({editedResource, resourceID},{rejectWithValue}) => {
+    try{
+      const response = await editResourceAPICall(editedResource, resourceID);
+      return response;
+    }catch (error){
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 
 
 export const assignResource = createAsyncThunk(
@@ -155,6 +182,33 @@ export const assignResource = createAsyncThunk(
     }
   }
 );
+
+
+const fetchDeleteResourceAPICall = async (resourceID) => {
+  let endpoint = ''
+  endpoint = API_URL + '/api/resources/' + resourceID
+
+  const response = await fetch(endpoint, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+  return response;
+}
+
+export const deleteResource = createAsyncThunk(
+  'delete/unassignResource',
+  async (resourceID, { rejectWithValue }) => {
+    try {
+      const response = await fetchDeleteResourceAPICall(resourceID);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 
 export const unassignResource = createAsyncThunk(
   'resources/unassignResource',

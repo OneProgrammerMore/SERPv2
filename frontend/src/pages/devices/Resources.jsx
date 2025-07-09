@@ -23,12 +23,15 @@ import {
   Refresh as RefreshIcon,
   Add as AddIcon,
   Search as SearchIcon,
-  LocationOn as LocationOnIcon
+  LocationOn as LocationOnIcon,
+  Remove as DeleteIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { fetchResources, createResource } from '../../redux/slices/resourcesSlice';
+import { fetchResources, createResource, deleteResource, editResource } from '../../redux/slices/resourcesSlice';
+import CardActions from '@mui/material/CardActions';
 
 
 const modalStyle = {
@@ -105,7 +108,9 @@ const Resources = () => {
   //const [resources, setResources] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   //const [isLoading, setIsLoading] = useState(true);
-  const [openModal, setOpenModal] = useState(false);
+  const [openNewResouceModal, setOpenNewResourceModal] = useState(false);
+  const [openEditResourceModal, setOpenEditResourceModal] = useState(false)
+  const [selResourceID, setSelResourceID] = useState(false)
   const [openMap, setOpenMap] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -123,9 +128,36 @@ const Resources = () => {
     return () => clearInterval(idResources) ;  
   }, []);
 
-  const handleModalOpen = () => setOpenModal(true);
+  const handleModalOpen = (modelToOpen, resourceID) => {
+    switch (modelToOpen) {
+      case 'create':
+        setOpenNewResourceModal(true);
+        break;
+      case 'edit':
+        const resourceSel = resources.filter(resource =>
+          resource.id == resourceID
+        )[0];
+
+        if (resourceSel){
+          setSelResourceID(resourceSel.id);
+          console.log('resourceSel', resourceSel);
+          setFormData({
+            name: resourceSel.name,
+            resource_type: resourceSel.resource_type,
+            status: resourceSel.status,
+            actual_latitude: resourceSel.location_resource_data.latitude,
+            actual_longitude: resourceSel.location_resource_data.longitude,
+          });
+        }
+        
+        setOpenEditResourceModal(true);
+        break;
+    }
+  };
+
   const handleModalClose = () => {
-    setOpenModal(false);
+    setOpenNewResourceModal(false);
+    setOpenEditResourceModal(false);
     setFormData({
       name: '',
       type: '',
@@ -192,6 +224,56 @@ const Resources = () => {
 
   };
 
+  const handleDeleteResource = async(resourceID) => {
+    try{
+      const response = await dispatch(deleteResource(resourceID));
+
+      if(!response.payload.ok){
+        console.log(
+          "Looks like there was a problem. Status Code: ", response
+        );
+        return;
+      }else{
+        handleRefresh();
+      }
+    }catch (err){
+      console.log("Error in Create new Emergency while creating emergency", err);
+    }
+
+  };
+
+  const handleEditResource = async (event) => {
+    event.preventDefault();
+    // Crear nueva incidencia con ID único y fecha
+    const editedResource = {
+      ...formData
+    };
+    console.log()
+    try{
+      const resourceID = selResourceID;
+      console.log("Here - ", resourceID);
+      const response = await dispatch(editResource({editedResource, resourceID}));
+
+      if(!response.payload.ok){
+        console.log(
+          "Looks like there was a problem. Status Code: ", response
+        );
+        return;
+      }else{
+        console.log("Succesfully created new emergency")
+        dispatch(fetchResources())
+        handleModalClose();
+      }
+    }catch (err){
+      console.log("Error in Create new Emergency while creating emergency", err);
+      handleModalClose();
+    }
+
+  };
+
+  
+
+
   const handleRefresh = () => {
     dispatch(fetchResources())
   };
@@ -228,7 +310,7 @@ const Resources = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={handleModalOpen}
+            onClick={() => handleModalOpen('create', '')}
           >
             New Resource
           </Button>
@@ -253,7 +335,7 @@ const Resources = () => {
       </Box>
 
       <Modal
-        open={openModal}
+        open={openNewResouceModal}
         onClose={handleModalClose}
         aria-labelledby="modal-title"
       >
@@ -263,6 +345,7 @@ const Resources = () => {
           </Typography>
           <form onSubmit={handleAddResource}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            
             <TextField
               fullWidth
               label="Nom"
@@ -281,6 +364,7 @@ const Resources = () => {
                 <MenuItem value="Ambulance">Ambulance</MenuItem>
                 <MenuItem value="Police">Police</MenuItem>
                 <MenuItem value="Firetruck">Firetruck</MenuItem>
+                <MenuItem value="Unknown">Unknown</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth>
@@ -336,6 +420,97 @@ const Resources = () => {
           </form>
         </Box>
       </Modal>
+              
+      
+      <Modal
+        open={openEditResourceModal}
+        onClose={handleModalClose}
+        aria-labelledby="modal-title"
+      >
+        <Box sx={modalStyle}>
+          <Typography id="modal-title" variant="h6" component="h2" sx={{ mb: 3 }}>
+            Edit Resource
+          </Typography>
+          <form onSubmit={handleEditResource}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            
+            <TextField
+              fullWidth
+              label="Nom"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+            />
+            <FormControl fullWidth>
+              <InputLabel>Tipus</InputLabel>
+              <Select
+                name="resource_type"
+                value={formData.resource_type}
+                label="Tipus"
+                onChange={handleInputChange}
+              >
+                <MenuItem value="Ambulance">Ambulance</MenuItem>
+                <MenuItem value="Police">Police</MenuItem>
+                <MenuItem value="Firetruck">Firetruck</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                name="status"
+                value={formData.status}
+                label="Status"
+                onChange={handleInputChange}
+              >
+                <MenuItem value="Available">Available</MenuItem>
+                <MenuItem value="Busy">Busy</MenuItem>
+                <MenuItem value="Maintenance">Maintenance</MenuItem>
+                <MenuItem value="Unknown">Unknown</MenuItem>
+              </Select>
+            </FormControl>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<LocationOnIcon />}
+              onClick={() => setOpenMap(true)}
+            >
+              Chose the location
+            </Button>
+            <TextField
+              fullWidth
+              label="Latitude"
+              name="actual_latitude"
+              value={formData.actual_latitude}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Longitud"
+              name="actual_longitude"
+              value={formData.actual_longitude}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
+              <Button onClick={handleModalClose}>Cancel·lar</Button>
+              <Button 
+                variant="contained" 
+                onClick={handleEditResource}
+                disabled={!formData.name || !formData.resource_type || !formData.actual_latitude || !formData.actual_longitude}
+              >
+                Edit
+              </Button>
+            </Box>
+          </Box>
+          </form>
+        </Box>
+      </Modal>
+
+
+
 
       <Modal
         open={openMap}
@@ -360,7 +535,7 @@ const Resources = () => {
               center={[41.3879, 2.16992]}
               zoom={13}
               style={{ height: '100%', width: '100%' }}
-            >
+            > 
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -468,6 +643,47 @@ const Resources = () => {
                     />
                   </Box>
                 </CardContent>
+                <CardActions
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'center'
+                  }}
+                >
+                    <Button
+                      variant="contained"
+                      startIcon={<DeleteIcon />}
+                      onClick={() => handleDeleteResource(resource.id)}
+                      sx={{
+                        margin: '8px',
+                        width: '35%',
+                        backgroundColor: 'red',
+                        textAlign: 'center',
+                        display: 'flex',
+                        justifyContent:'center',
+                        alignItems: 'center',
+                      }}
+                    >
+                      DELETE
+                    </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={<EditIcon />}
+                      onClick={() => handleModalOpen('edit', resource.id)}
+                      //onClick={() => handleEditResource(resource.id)}
+                      sx={{
+                        margin: '8px',
+                        width: '35%',
+                        backgroundColor: 'blue',
+                        textAlign: 'center',
+                        display: 'flex',
+                        justifyContent:'center',
+                        alignItems: 'center',
+                      }}
+                    >
+                      EDIT
+                    </Button>
+                  </CardActions>
               </Card>
             </Grid>
           ))}

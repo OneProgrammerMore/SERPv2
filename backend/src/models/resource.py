@@ -36,7 +36,7 @@ class Resource(SQLModel, table=True):
         nullable=False,
     )
     name: Optional[str] = Field(sa_column=Column(String(128), nullable=False))
-    resource_type: Optional[str] = Field(
+    resource_type: Optional[ResourceTypeEnum] = Field(
         sa_column=Column(
             Enum(ResourceTypeEnum), default=ResourceTypeEnum.UNKNOWN
         )
@@ -70,10 +70,12 @@ class Resource(SQLModel, table=True):
     email: Optional[str] = Field(sa_column=Column(String(128), nullable=True))
 
     time_created: datetime = Field(
-        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+        default_factory=datetime.utcnow,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
     )
     time_updated: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), onupdate=func.now())
+        default=None,
+        sa_column=Column(DateTime(timezone=True), onupdate=func.now()),
     )
 
     emergencies: List["Emergency"] = Relationship(

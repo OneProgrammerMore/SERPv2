@@ -542,7 +542,7 @@ const Dashboard = () => {
                                   />
                                 </Box>
                                 <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                                  Last Update: {new Date(resource.time_updated ? resource.time_updated : resource.time_created).toLocaleString()}
+                                  Last Update: {new Date(resource.time_updated != "" ? resource.time_updated : resource.time_created).toLocaleString()}
                                 </Typography>
                                 {resource.location_resource_data && (
                                   <Typography variant="caption" display="block" sx={{ mt: 1 }}>

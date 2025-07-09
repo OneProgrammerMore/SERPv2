@@ -135,11 +135,14 @@ async def list_alerts(session: Annotated[AsyncSession,
             Location, Location.id == Emergency.location_emergency
         )
     )
+
     result = emergencies.all()
     emergencies_with_location = []
+    
     for emergency, location in result:
         emergencyWithLocation = EmergencyWithLocationModelResponse(
-            **emergency.model_dump(),
+            #**emergency.model_dump(),
+            **emergency.__dict__, # Using __dict__ as model_dump can cause problems in async contexts, or so I read online, I do not understand why ^^'
             location_emergency_data=location
         )
         emergencies_with_location.append(emergencyWithLocation)
@@ -187,14 +190,12 @@ async def create_alert(
         db.add(emergency)
         emergency_id = emergency.id
 
-    await db.commit()
-
     return {"message": "Emergency Created", "emergency_id": str(emergency_id)}
 
 
 # READ EMERGENCY
-@router.get("/api/emergencies/{emergency_id}", response_model=EmergencyModelResponse, tags=["Emergencies"])
-async def get_alert(emergency_id: str, db: AsyncSession = Depends(get_db))->EmergencyModelResponse:
+@router.get("/api/emergencies/{emergency_id}", response_model=EmergencyModelResponse, status_code=201, tags=["Emergencies"])
+async def get_alert(emergency_id: uuid_pkg.UUID, db: AsyncSession = Depends(get_db))->EmergencyModelResponse:
     """Get emergency details"""
     stmt = select(Emergency).where(Emergency.id == emergency_id)
     result = await db.execute(stmt)
@@ -206,10 +207,10 @@ async def get_alert(emergency_id: str, db: AsyncSession = Depends(get_db))->Emer
 
 
 @router.patch(
-    "/api/emergencies/{emergency_id}", response_model=MessageResponse, tags=["Emergencies"]
+    "/api/emergencies/{emergency_id}", response_model=MessageResponse, status_code=201, tags=["Emergencies"]
 )
 async def update_alert(
-    emergency_id: str,
+    emergency_id: uuid_pkg.UUID,
     request: EmergencyUpdateRequest,
     db: AsyncSession = Depends(get_db),
 )->MessageResponse:
@@ -283,9 +284,8 @@ async def delete_device(
 
     return {"message": "Emergency Deleted"}
 
-# @router.get("/api/devices/{resource_id}/assignments",
-# response_model=List[Emergency], tags=["Alerts"])
-@router.get("/api/resources/{resource_id}/assignments",response_model=List[EmergencyModelResponse] , tags=["Resources"])
+
+@router.get("/api/resources/{resource_id}/assignments",response_model=List[EmergencyModelResponse], status_code=201, tags=["Resources"])
 async def get_device_assignments(
     resource_id: uuid_pkg.UUID, session: AsyncSession = Depends(get_db)
 )->List[EmergencyModelResponse]:
@@ -297,14 +297,13 @@ async def get_device_assignments(
         raise HTTPException(status_code=404, detail="Example not found")
     resource = result.unique().scalar_one()
     
-    # return resource.emergencies
     
     emergencies_for_resource = []
 
     for emergency in resource.emergencies:
         emergencies_for_resource.append(
             EmergencyModelResponse(
-                **emergency.model_dump()
+                **emergency.__dict__
             )
         )
     return emergencies_for_resource
@@ -431,15 +430,4 @@ async def add_device_assignments(
     # Refresh the emergency to ensure the response includes updated data
     await session.refresh(emergency, attribute_names=["resources"])
 
-    # Create response model (avoid model_dump() if it causes issues)
-    #emergency_response = EmergencyModelResponse.from_orm(emergency)
-    # emergency_response = EmergencyWithResourcesModelResponse.from_orm(emergency)
-    
-    # emergency_response = EmergencyWithResourcesModelResponse(
-    #     **emergency.model_dump()
-    # )
-
-    #print("emergency_response",emergency_response)
-
-    #return emergency_response
     return {"message": "Updated", "emergency_id": str(emergency_id)}
