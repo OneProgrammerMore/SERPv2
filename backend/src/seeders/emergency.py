@@ -19,7 +19,8 @@ from src.seeders.address import address_seeder
 from src.seeders.location import location_seeder
 from src.seeders.resource import resource_seeder
 
-async def emergency_seeder()->uuid_pkg.UUID:
+
+async def emergency_seeder() -> uuid_pkg.UUID:
     """
     Creates an emergency in the database and returns its ID
     """
@@ -38,23 +39,21 @@ async def emergency_seeder()->uuid_pkg.UUID:
     )
 
     emergency_seed = Emergency(
-        name=random.choice(resources_names) + "-" + str(random.randint(100, 999)),
+        name=random.choice(resources_names)
+        + "-"
+        + str(random.randint(100, 999)),
         description="That's a pseudorandom type for an emergency",
         priority=random.choice(list(PriorityType)),
         emergency_type=random.choice(list(EmergencyType)),
         status=random.choice(list(StatusType)),
-
         location_emergency=location_emergency,
         address_emergency=address_emergency,
-
         resource_id=resource.id,
         location_resource=resource.actual_location,
         address_resource=resource.actual_address,
-
         destination_id=destination.id,
         location_destination=destination.actual_location,
         address_destination=destination.actual_address,
-
         name_contact=fake.first_name(),
         telephone_contact=fake.phone_number(),
         id_contact=id_contact,

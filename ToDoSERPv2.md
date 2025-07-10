@@ -1,13 +1,13 @@
 # To Do SERP - 2025-07-08
 - [ ] Check and refactor endpoints for swagger documentation auto creation
 
-- [ ] Create Way Top Edit Resources In Frontend
-- [ ] Create Way to Delete Resource in Frontend
-- [ ] Resource Color Label For Main Panel Admin
-- [ ] Resource Invalid Date In Resources Admin Main Panel 
+- [x] Create Way Top Edit Resources In Frontend
+- [x] Create Way to Delete Resource in Frontend
+- [x] Resource Color Label For Main Panel Admin
+- [x] Resource Invalid Date In Resources Admin Main Panel 
 
 
-- [ ] Test CRUDs As Example
+- [x] Test CRUDs Emergencies As Example
 - [ ] Check Backend Code with Toolset
 - [ ] Check Frontend Code with Toolset
 
@@ -15,6 +15,8 @@
 
 
 # ToDo Version 0.003
+- [ ] Change dict usage by model_dump or validate_model as dict is deprecated in SQLalquemy.
+- [ ] Test CRUD Resources
 - [ ] Assigned Emergency To Resource - Main Panel Resource [NEW MODEL USER NEEDED]
 - [ ] Add query parameters for filters and adapt frontend for better performance
 - [ ] Add Resource Information in Backend Python Service In order to be able to use CAMARA API (Extend Model Resource or New Model For CamaraAPI Information)
@@ -27,6 +29,12 @@
     - [ ] Location of Resources By CAMARA API
     - [ ] Show Resource Reception
 - [ ] Improve React AJAX App For Better Performance
+    - [ ] Add Paginator
+        - [ ] Resources
+        - [ ] Emergencies
+    - [ ] Add Filters
+        - [ ] Resources
+        - [ ] Emergencies
     
     
 

@@ -14,7 +14,7 @@ from src.seeders.location import location_seeder
 RESOURCE_TYPES = ["ambulance", "firetruck", "police"]
 
 
-async def resource_seeder()->Resource:
+async def resource_seeder() -> Resource:
     """
     Creates a random resource and returns it
     """

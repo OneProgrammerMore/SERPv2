@@ -436,7 +436,7 @@ const Resources = () => {
             
             <TextField
               fullWidth
-              label="Nom"
+              label="Name"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
@@ -446,7 +446,7 @@ const Resources = () => {
               <Select
                 name="resource_type"
                 value={formData.resource_type}
-                label="Tipus"
+                label="Type"
                 onChange={handleInputChange}
               >
                 <MenuItem value="Ambulance">Ambulance</MenuItem>

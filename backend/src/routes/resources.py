@@ -2,7 +2,9 @@
 Routes for resources CRUD and more related to resources Model
 """
 
-from typing import Annotated, Optional, List, Any
+import uuid as uuid_pkg
+from datetime import datetime
+from typing import Annotated, List, Optional
 
 from fastapi import (
     APIRouter,
@@ -12,7 +14,6 @@ from fastapi import (
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped
 
 from src.configs.database import get_db
 from src.models.address import Address
@@ -20,11 +21,7 @@ from src.models.emergency import Emergency
 from src.models.emergencyresourceslink import EmergencyResourceLink
 from src.models.location import Location
 from src.models.resource import Resource, ResourceStatusEnum, ResourceTypeEnum
-
 from src.services.helpers import convertStringToUUID
-import uuid as uuid_pkg
-
-from datetime import datetime
 
 router = APIRouter()
 
@@ -78,20 +75,25 @@ class ResourceModelRequest(BaseModel):
 
 class ResourcesWithLocationModel(ResourceModel):
     """Base Model For Output/Http Response Validation"""
+
     id: uuid_pkg.UUID
     location_resource_data: Optional[Location]
 
-    model_config = {
-        "arbitrary_types_allowed": True
-    }
+    model_config = {"arbitrary_types_allowed": True}
 
 
 # LIST ALL RESOURCES
 # @router.get("/api/devices", response_model=List[Resource], tags=["Devices"])
-@router.get("/api/resources", tags=["Resources"], response_model=List[ResourcesWithLocationModel])
-async def list_devices(session: Annotated[AsyncSession, Depends(get_db)])->List[ResourcesWithLocationModel]:
+@router.get(
+    "/api/resources",
+    tags=["Resources"],
+    response_model=List[ResourcesWithLocationModel],
+)
+async def list_devices(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> List[ResourcesWithLocationModel]:
     """List all resources"""
-    
+
     resources = await session.execute(
         select(Resource, Location).join(
             Location, Location.id == Resource.actual_location
@@ -102,24 +104,29 @@ async def list_devices(session: Annotated[AsyncSession, Depends(get_db)])->List[
 
     for resource, location in result:
         resourceWithLocation = ResourcesWithLocationModel(
-            **resource.__dict__,
-            location_resource_data=location
+            **resource.__dict__, location_resource_data=location
         )
         new_resources.append(resourceWithLocation)
 
-    return new_resources    
+    return new_resources
+
 
 class MessageResponse(BaseModel):
     message: str
     resource_id: str
 
 
-#@router.post("/api/devices", response_model=Resource, status_code=201, tags=["Devices"])
-@router.post("/api/resources", response_model=MessageResponse, status_code=201, tags=["Resources"])
+# @router.post("/api/devices", response_model=Resource, status_code=201, tags=["Devices"])
+@router.post(
+    "/api/resources",
+    response_model=MessageResponse,
+    status_code=201,
+    tags=["Resources"],
+)
 async def create_device(
     db: Annotated[AsyncSession, Depends(get_db)],
     request: ResourceModelRequest,
-)-> MessageResponse:
+) -> MessageResponse:
     """Create a new device/resource"""
     async with db.begin():  # Ensures rollback on failure
         actual_location = Location(
@@ -161,13 +168,12 @@ async def create_device(
             email=request.email,
         )
         db.add(resource)
-        
+
         resource_id = resource.id
 
     # await db.commit()
 
     return {"message": "Resource Created", "resource_id": str(resource_id)}
-    
 
 
 # READ A RESOURCE
@@ -176,7 +182,7 @@ async def create_device(
 )
 async def get_device(
     db: Annotated[AsyncSession, Depends(get_db)], resource_id: str
-)->Resource:
+) -> Resource:
     """Get device/resource details"""
 
     resource_uuid = convertStringToUUID(resource_id)
@@ -190,17 +196,18 @@ async def get_device(
     return resource
 
 
-
-
 # @router.patch("/api/devices/{resource_id}", response_model=Resource, tags=["Devices"])
-@router.patch("/api/resources/{resource_id}", response_model=MessageResponse, tags=["Resources"])
+@router.patch(
+    "/api/resources/{resource_id}",
+    response_model=MessageResponse,
+    tags=["Resources"],
+)
 async def update_device(
     db: Annotated[AsyncSession, Depends(get_db)],
     resource_id: uuid_pkg.UUID,
     request: ResourceModelRequest,
-)->MessageResponse:
+) -> MessageResponse:
     """Update resource details"""
-
 
     async with db.begin():  # Ensures rollback on failure
         # Find Resource
@@ -215,12 +222,18 @@ async def update_device(
             key: value
             for key, value in request.dict().items()
             if key
-            in ["resource_type", "status", "responsible", "telephone", "email"]
+            in [
+                "name",
+                "resource_type",
+                "status",
+                "responsible",
+                "telephone",
+                "email",
+            ]
         }
         # for field, value in model_data.dict(exclude_unset=True).items():
         for field, value in model_data.items():
             setattr(resource, field, value)
-       # await db.commit()
 
         # Update Actual Location
         # Find Location
@@ -233,8 +246,7 @@ async def update_device(
             )
         actual_location.longitude = request.actual_longitude
         actual_location.latitude = request.actual_latitude
-        #await db.commit()
-        
+
         # Update Actual Address
         stmt = select(Address).where(Address.id == resource.actual_address)
         result = await db.execute(stmt)
@@ -245,7 +257,6 @@ async def update_device(
             )
         actual_address.longitude = request.actual_address_longitude
         actual_address.latitude = request.actual_address_latitude
-        # await db.commit()
 
         # Update Normal Location
         # Find Location
@@ -259,7 +270,6 @@ async def update_device(
         normal_location.longitude = request.normal_longitude
         normal_location.latitude = request.normal_latitude
 
-        #await db.commit()
         # Update normal Address
         stmt = select(Address).where(Address.id == resource.normal_address)
         result = await db.execute(stmt)
@@ -270,16 +280,16 @@ async def update_device(
             )
         normal_address.longitude = request.normal_address_longitude
         normal_address.latitude = request.normal_address_latitude
-        #await db.commit()
 
     return {"message": "Resource Updated", "resource_id": str(resource_id)}
 
 
 # DELETE A RESOURCE
-@router.delete("/api/resources/{resource_id}", status_code=200, tags=["Resources"])
+@router.delete(
+    "/api/resources/{resource_id}", status_code=200, tags=["Resources"]
+)
 async def delete_device(
-    db: Annotated[AsyncSession, Depends(get_db)], 
-    resource_id: uuid_pkg.UUID
+    db: Annotated[AsyncSession, Depends(get_db)], resource_id: uuid_pkg.UUID
 ):
     """Delete a resource"""
 
@@ -300,7 +310,7 @@ async def delete_device(
         resources_to_emergencies = result.scalars().all()
         for el in resources_to_emergencies:
             await db.delete(el)
-            #await db.commit()
+            # await db.commit()
 
         # Unset ALL Emergencies with This Resource
         result = await db.execute(
@@ -311,7 +321,7 @@ async def delete_device(
         # Unset (set to None) the ex2_id field for those models
         for model in models:
             model.resource_id = None  # Set ex2_id to None
-            #await db.commit()
+            # await db.commit()
 
         # Unset ALL Emergencies with This Resource
         result_dest = await db.execute(
@@ -322,7 +332,7 @@ async def delete_device(
         # Unset (set to None) the ex2_id field for those models
         for model in models_dest:
             model.destination_id = None  # Set ex2_id to None
-            #await db.commit()
+            # await db.commit()
 
         # If QOSOD is Active Deactivate it ToDo - IMPORTANT
 

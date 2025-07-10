@@ -32,8 +32,8 @@ mypy:
 	# Static type checker for Python (especially good if using type hints).
 	echo "mypy src"
 	-mypy src/
-	echo "mypy src"
-	-mypy tests/
+	echo "mypy tests integration"
+	-mypy tests/integration/
 security:
 	echo "bandit -r"
 	-bandit -r .

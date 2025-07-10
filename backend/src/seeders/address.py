@@ -3,16 +3,17 @@ Seeder for addresses database model
 """
 
 import random
+import uuid as uuid_pkg
 
 from faker import Faker
 
 from src.configs.database import get_db
 from src.models.address import Address
-import uuid as uuid_pkg
 
 fake = Faker()
 
-async def address_seeder()->uuid_pkg.UUID:
+
+async def address_seeder() -> uuid_pkg.UUID:
     """
     Creates an address in the database and returns its ID
     """

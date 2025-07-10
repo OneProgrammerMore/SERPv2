@@ -1,13 +1,16 @@
 """User Model for PostgreSQL for SERP Project"""
+
 import uuid as uuid_pkg
 from datetime import datetime
 from typing import Optional
+
 from sqlalchemy import Column, DateTime, String, func
 from sqlmodel import Field, SQLModel
 
 
 class User(SQLModel, table=True):
     """User SQLModel for FastAPI SERP project"""
+
     id: uuid_pkg.UUID = Field(
         default_factory=uuid_pkg.uuid4,
         primary_key=True,

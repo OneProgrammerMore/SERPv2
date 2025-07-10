@@ -1,4 +1,5 @@
 """Define Emergency Model for SERP"""
+
 import enum
 import uuid as uuid_pkg
 from datetime import datetime
@@ -9,8 +10,10 @@ from sqlmodel import Field, Relationship, SQLModel
 
 from src.models.emergencyresourceslink import EmergencyResourceLink
 
+
 class EmergencyType(str, enum.Enum):
     """EmergencyType Enum - Type of Emergency"""
+
     FIRE = "Fire"
     MEDICAL = "Medical"
     ACCIDENT = "Accident"
@@ -20,6 +23,7 @@ class EmergencyType(str, enum.Enum):
 
 class PriorityType(str, enum.Enum):
     """Priority of the emergency"""
+
     CRITICAL = "Critical"
     HIGH = "High"
     MEDIUM = "Medium"
@@ -28,6 +32,7 @@ class PriorityType(str, enum.Enum):
 
 class StatusType(str, enum.Enum):
     """Status of the emergency"""
+
     ACTIVE = "Active"
     PENDING = "Pending"
     SOLVED = "Solved"
@@ -67,7 +72,7 @@ class Emergency(SQLModel, table=True):
     resource_id: Optional[uuid_pkg.UUID] = Field(
         default=None, foreign_key="resource.id", ondelete="SET NULL"
     )
-    
+
     location_resource: Optional[uuid_pkg.UUID] = Field(
         default=None, foreign_key="location.id", ondelete="SET NULL"
     )

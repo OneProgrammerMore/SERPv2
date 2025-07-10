@@ -1,4 +1,5 @@
 """Resources Model for Database - PostgreSQL"""
+
 import enum
 import uuid as uuid_pkg
 from datetime import datetime
@@ -13,6 +14,7 @@ from src.models.emergencyresourceslink import EmergencyResourceLink
 
 class ResourceStatusEnum(str, enum.Enum):
     """Resource Status Possibilities"""
+
     UNKNOWN = "Unknown"
     AVAILABLE = "Available"
     BUSY = "Busy"
@@ -21,6 +23,7 @@ class ResourceStatusEnum(str, enum.Enum):
 
 class ResourceTypeEnum(str, enum.Enum):
     """Resource Types Possibilities"""
+
     UNKNOWN = "Unknown"
     AMBULANCE = "Ambulance"
     POLICE = "Police"
@@ -29,6 +32,7 @@ class ResourceTypeEnum(str, enum.Enum):
 
 class Resource(SQLModel, table=True):
     """Resource Model for SQL Model"""
+
     id: uuid_pkg.UUID = Field(
         default_factory=uuid_pkg.uuid4,
         primary_key=True,

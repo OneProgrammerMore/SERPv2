@@ -1,4 +1,4 @@
-""" Init the models in the database """
+"""Init the models in the database"""
 
 from sqlmodel import SQLModel
 

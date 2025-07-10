@@ -2,10 +2,11 @@
 
 import contextlib
 from typing import Any, AsyncIterator, Optional
+
 from sqlalchemy.ext.asyncio import (
     AsyncConnection,
-    AsyncSession,
     AsyncEngine,
+    AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
@@ -38,7 +39,7 @@ DATABASE_URL = (
 
 Base = declarative_base()
 
-# Heavily inspired by 
+# Heavily inspired by
 # https://praciano.com.br/fastapi-and-async-sqlalchemy-20-with-pytest-done-right.html
 
 
@@ -46,7 +47,9 @@ class DatabaseSessionManager:
     """Class to manage Database session"""
 
     def __init__(self, host: str, engine_kwargs: dict[str, Any] = {}):
-        self._engine: Optional[AsyncEngine] = create_async_engine(host, **engine_kwargs)
+        self._engine: Optional[AsyncEngine] = create_async_engine(
+            host, **engine_kwargs
+        )
         # self._sessionmaker: Optional[async_sessionmaker[AsyncSession]] = async_sessionmaker(
         #     autocommit=False, bind=self._engine
         # )
@@ -55,7 +58,7 @@ class DatabaseSessionManager:
         )
 
     async def close(self) -> None:
-        """ Close connection with database"""
+        """Close connection with database"""
         if self._engine is None:
             raise Exception("DatabaseSessionManager is not initialized")
         await self._engine.dispose()
@@ -65,7 +68,7 @@ class DatabaseSessionManager:
 
     @contextlib.asynccontextmanager
     async def connect(self) -> AsyncIterator[AsyncConnection]:
-        """ Connect with database"""
+        """Connect with database"""
         if self._engine is None:
             raise Exception("DatabaseSessionManager is not initialized")
 
@@ -99,6 +102,7 @@ class DatabaseSessionManager:
 
 
 sessionmanager = DatabaseSessionManager(DATABASE_URL, {"echo": True})
+
 
 # Possible Error
 async def get_db() -> AsyncSession:

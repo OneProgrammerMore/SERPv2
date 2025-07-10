@@ -10,6 +10,7 @@ from sqlmodel import Field, SQLModel
 
 class Location(SQLModel, table=True):
     """Location SQLModel For FastAPI"""
+
     id: uuid_pkg.UUID = Field(
         default_factory=uuid_pkg.uuid4,
         primary_key=True,

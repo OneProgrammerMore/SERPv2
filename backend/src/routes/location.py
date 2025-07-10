@@ -15,10 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.configs.database import get_db
 from src.models.location import Location
 from src.models.resource import Resource
-
 from src.services.helpers import convertStringToUUID
 
 router = APIRouter()
+
 
 @router.get(
     "/api/devices/{resource_id}/location",

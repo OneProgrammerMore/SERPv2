@@ -566,8 +566,13 @@ const Dashboard = () => {
                             action={
                               <Chip
                                 label={resource.status}
-                                color={resource.status === 'disponible' ? 'success' : 
-                                       resource.status === 'ocupado' ? 'error' : 'warning'}
+                                sx={{ 
+                                  backgroundColor: getResourceStatusColor(resource.status),
+                                  color: 'white',
+                                  '& .MuiChip-label': {
+                                    px: 1
+                                  }
+                                }}
                                 size="small"
                               />
                             }
