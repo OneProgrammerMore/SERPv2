@@ -104,11 +104,11 @@ def runserver():
     app.include_router(resources.router)
 
     if "PORT" in os.environ:
-        port = os.environ["PORT"]
+        portApp = int(os.environ["PORT"])
     else:
-        port = 5001
+        portApp = 5001
 
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=portApp)
 
 if __name__ == "__main__":
     cli()

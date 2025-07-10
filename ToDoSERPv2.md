@@ -1,5 +1,5 @@
 # To Do SERP - 2025-07-08
-- [ ] Check and refactor endpoints for swagger documentation auto creation
+- [x] Check and refactor endpoints for swagger documentation auto creation
 
 - [x] Create Way Top Edit Resources In Frontend
 - [x] Create Way to Delete Resource in Frontend
@@ -11,9 +11,9 @@
 - [x] Check Backend Code with Toolset
 - [x] Check Frontend Code with Toolset
 
-- [ ] Fast Api Command To Seed Database
-- [ ] Cronos to migrate and Seed Database every Sunday
-- [ ] Resources is undefined React App when no server response in /devices/resoruces
+- [x] Fast Api Command To Seed Database
+- [x] Cronos to migrate and Seed Database every Sunday
+- [x] Resources is undefined React App when no server response in /devices/resoruces
 
 
 # TO DO - Past
@@ -29,10 +29,10 @@
 - [x] Seeders For DB
 
 - [ ] User Auth Without Password
-- [ ] Seeders For Testing (min 3 users and 2 controls)
-- [ ] Testing In Browser
+- [x] Seeders For Testing (min 3 users and 2 controls)
+- [x] Testing In Browser
 - [ ] Unitary Tests For code LIST
-- [ ] Panel Create Alert
+- [x] Panel Create Alert
 - [ ] Add User History Interaction In All Registers for
     - [ ] Creating Alert
     - [ ] 
@@ -50,7 +50,7 @@ LOCATION
 
 
 # ToDo Version 0.003
-- [ ] Solve Bug Unassigned Resources Are not freed to status Available when reassigning resources to emergency. [BUG]
+- [ ] Solve Possible Bug Unassigned Resources Are not freed to status Available when reassigning resources to emergency. [BUG]
 - [ ] Change dict usage by model_dump or validate_model as dict is deprecated in SQLalquemy.
 - [ ] Test CRUD Resources
 - [ ] Assigned Emergency To Resource - Main Panel Resource [NEW MODEL USER NEEDED]
@@ -147,7 +147,6 @@ LOCATION
 - [ ] Other Resources Assigned To SAME Emergency IN!
 
 ## OPERATOR 112 (ONLY Can Create or Modify Emergencies)
-- [ ] Main Panel OUT!
 - [ ] New Emergency Form
     - [ ] Create Emergency API Endpoint
 - [ ] Edit Emergency

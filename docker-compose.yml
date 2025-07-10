@@ -14,11 +14,14 @@ services:
       - SEED_DB_DEMO=false
       - PORT=5001
     command: ["sleep", "infinity"]
-    #entrypoint: [/app/entrypoint.sh]
+    # entrypoint: [/app/entrypoint.sh]
     #command: >
     #  /bin/bash -c "chmod /app/entrypoint.sh"
-    #command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5001", "--reload"]
     # uvicorn main:app --host 0.0.0.0 --port 5001 --reload
+    # python main.py runserver
+    # python main.py seeddb
+    # python main.py dropdb
+
   
   SERP-db:
     image: postgres:15.10-bookworm

@@ -8,6 +8,17 @@ Emergency and Priority Response System - Project presented at Talent Arena 2025
 
 SERP is a comprehensive emergency management system that optimizes emergency response through network prioritization, real-time location tracking, and emergency resource allocation. The system integrates with Nokia API services to provide Quality of Service (QoS) for emergency vehicles and essential resource management.
 
+This project has been initially done by a team of 5 for the 2 days hackaton at Talent Arena 2025. As it could not be finished, neither presented, Mario Gómez García has "finished" it (work still in progress but parked).
+
+The inital team was:
+  - Ariana
+  - Alex
+  - Joan Renau Valls
+  - Mario Gómez García
+  - Kiruru
+
+
+
 ## Key Features
 
 - **Emergency Management**:
@@ -37,10 +48,8 @@ The system is built using a microservices architecture with the following compon
 - **Backend API**: FastAPI-based service handling business logic
 - **Frontend**: React-based responsive web application
 - **Database**: PostgreSQL for data persistence
-- **Mock Nokia API**: Simulated integration with Nokia's network services
+- **Mock Nokia API**: Simulated integration with Nokia's network services [ToDo Version 0.003]
 - **Docker**: Container-based deployment for all components
-
-![Architecture](https://placehold.co/800x400?text=SERP+Architecture)
 
 ## Technology Stack
 
@@ -51,13 +60,14 @@ The system is built using a microservices architecture with the following compon
 - **Alembic**: Database migration
 - **Docker**: Containerization
 - **Uvicorn**: ASGI server
+- **Pytes**: API testing
+
 
 ### Frontend
 - **React**: UI framework
 - **Redux**: State management
 - **Material-UI**: Component library
 - **Leaflet**: Interactive maps
-- **Axios**: API communication
 - **React Router**: Navigation
 
 ## Project Structure
@@ -67,6 +77,7 @@ The system is built using a microservices architecture with the following compon
 ├── backend/
 │   ├── alembic/            # Database migrations
 │   ├── src/
+│   │   ├── commands/       # Commands for project
 │   │   ├── configs/        # Configuration files
 │   │   ├── models/         # Database models
 │   │   ├── routes/         # API endpoints
@@ -111,10 +122,10 @@ The system is built using a microservices architecture with the following compon
    docker-compose up -d
    ```
 
-3. Initialize the database (first run only):
-   ```bash
-   docker exec SERP-backend alembic upgrade head
-   ```
+3. If you want data to play with: [OPTIONAL]
+  ```bash
+  docker exec -it SERP-backend python main.py seeddb
+  ```
 
 4. Access the application:
    - Frontend: http://localhost:3000
@@ -123,7 +134,7 @@ The system is built using a microservices architecture with the following compon
 
 ## Usage
 
-### Login Credentials
+### Login Credentials [HARDCODED] - *User Authentication Not yet done
 
 The system includes simulated authentication with the following demo accounts:
 
@@ -133,24 +144,13 @@ The system includes simulated authentication with the following demo accounts:
 
 - **Resource Personnel**:
   - Email: resource@serp.cat
-  - Password: resources123
+  - Password: resource123
 
 - **Emergency Operator**:
   - Email: operator@serp.cat
   - Password: operator123
 
-### Creating Test Scenarios
 
-A script is included to create test emergency scenarios:
-
-```bash
-./create_emergency_scenario.sh
-```
-
-For debug mode with more verbose output:
-```bash
-./create_emergency_scenario.sh -d
-```
 
 ## API Endpoints
 
@@ -175,7 +175,9 @@ For debug mode with more verbose output:
 ### Location Services
 - `GET /api/devices/{id}/location` - Get current device location
 
-## Database Management
+
+
+## Usefull Commands
 
 ### Running Migrations
 ```bash
@@ -216,9 +218,6 @@ CREATE SCHEMA public;
 - Theme switching (light/dark mode)
 - Mobile responsive design
 
-## Presentation link
-[![Presentation](https://www.figma.com/design/7FVEIVQaa3edF0PTWYvUGs/SERP?node-id=0-1&t=mejRacq9bFvye6t8-1)](https://www.figma.com/design/7FVEIVQaa3edF0PTWYvUGs/SERP?node-id=0-1&t=mejRacq9bFvye6t8-1)
-
 ## Contributing
 
 1. Fork the repository
@@ -235,3 +234,19 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Project presented at Talent Arena 2025
 - Thanks to Nokia for API integration specifications
+
+
+
+
+### Creating Test Scenarios - DEPRECATED
+
+A script is included to create test emergency scenarios:
+
+```bash
+./create_emergency_scenario.sh
+```
+
+For debug mode with more verbose output:
+```bash
+./create_emergency_scenario.sh -d
+```
