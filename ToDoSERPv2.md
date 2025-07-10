@@ -8,11 +8,15 @@
 
 
 - [x] Test CRUDs Emergencies As Example
-- [ ] Check Backend Code with Toolset
-- [ ] Check Frontend Code with Toolset
+- [x] Check Backend Code with Toolset
+- [x] Check Frontend Code with Toolset
+
+- [ ] Fast Api Command To Seed Database
+- [ ] Cronos to migrate and Seed Database every Sunday
+- [ ] Resources is undefined React App when no server response in /devices/resoruces
 
 
-# TO DO - ALEX
+# TO DO - Past
 - [x] DB Config
 - [x] DB Migration
 - [x] Documentation
@@ -33,33 +37,6 @@
     - [ ] Creating Alert
     - [ ] 
 
-# API & SERVICE Structure
-
-## API
-
-EMERGENCIES/ALERTS
-- [ ] List ALL Alerts/Emergencies
-- [ ] Create Alert/Emergency
-- [ ] Read Alert/Emergency
-- [ ] Update Alert/Emergency
-- [ ] Archive Alert/Emergency
-- [ ] Delete Alert/Emergency
-
-RESOURCES/Devices
-- [ ] List ALL Devices by Status
-- [ ] Create Device
-- [ ] Read/Get Device
-- [ ] Update Device
-- [ ] Read/Get Device Assigments
-- [ ] Archive Device
-- [ ] Delete Device
-
-ASSIGMENTS
-- [ ] Create Assigment
-- [ ] Read Assigment
-- [ ] Update Assigment
-- [ ] Archive Assigment
-- [ ] Delete Assigment
 
 
 QOD
@@ -73,6 +50,7 @@ LOCATION
 
 
 # ToDo Version 0.003
+- [ ] Solve Bug Unassigned Resources Are not freed to status Available when reassigning resources to emergency. [BUG]
 - [ ] Change dict usage by model_dump or validate_model as dict is deprecated in SQLalquemy.
 - [ ] Test CRUD Resources
 - [ ] Assigned Emergency To Resource - Main Panel Resource [NEW MODEL USER NEEDED]

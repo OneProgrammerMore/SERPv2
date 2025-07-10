@@ -130,9 +130,11 @@ const Resources = () => {
   });
 
   useEffect(() => {
-    dispatch(fetchResources());
-    const idResources = setInterval(() => dispatch(fetchResources()), 100000);
-    return () => clearInterval(idResources);
+
+      dispatch(fetchResources());
+      const idResources = setInterval(() => dispatch(fetchResources()), 100000);
+      return () => clearInterval(idResources);
+    
   }, []);
 
   const handleModalOpen = (modelToOpen, resourceID) => {
@@ -290,11 +292,11 @@ const Resources = () => {
     setSearchTerm(event.target.value);
   };
 
-  const filteredResources = resources.filter(
+  const filteredResources = resources? resources.filter(
     (resource) =>
       resource.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.resource_type.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  ): [];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -588,7 +590,7 @@ const Resources = () => {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
               <MapComponent onLocationSelect={handleLocationSelect} />
-              {resources
+              {resources && resources
                 .filter(
                   (resource) =>
                     resource.location_resource_data.latitude != null &&
@@ -674,7 +676,7 @@ const Resources = () => {
         />
 
         <Grid container spacing={3}>
-          {filteredResources.map((resource) => (
+          {filteredResources && filteredResources.map((resource) => (
             <Grid item xs={12} sm={6} md={4} key={resource.id}>
               <Card>
                 <CardHeader

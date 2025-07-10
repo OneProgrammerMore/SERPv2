@@ -100,6 +100,12 @@ class DatabaseSessionManager:
             async with self._engine.begin() as conn:
                 await conn.run_sync(SQLModel.metadata.create_all)
 
+    async def drop_db_and_tables(self) -> None:
+        """Drop DB and tables = Migrations"""
+        if type(self._engine) == AsyncEngine:
+            async with self._engine.begin() as conn:
+                await conn.run_sync(SQLModel.metadata.drop_all)
+
 
 sessionmanager = DatabaseSessionManager(DATABASE_URL, {"echo": True})
 
