@@ -83,7 +83,6 @@ class ResourcesWithLocationModel(ResourceModel):
 
 
 # LIST ALL RESOURCES
-# @router.get("/api/devices", response_model=List[Resource], tags=["Devices"])
 @router.get(
     "/api/resources",
     tags=["Resources"],
@@ -92,7 +91,9 @@ class ResourcesWithLocationModel(ResourceModel):
 async def list_devices(
     session: Annotated[AsyncSession, Depends(get_db)],
 ) -> List[ResourcesWithLocationModel]:
-    """List all resources"""
+    """
+    List all resources
+    """
 
     resources = await session.execute(
         select(Resource, Location).join(
@@ -116,7 +117,6 @@ class MessageResponse(BaseModel):
     resource_id: str
 
 
-# @router.post("/api/devices", response_model=Resource, status_code=201, tags=["Devices"])
 @router.post(
     "/api/resources",
     response_model=MessageResponse,
@@ -127,7 +127,10 @@ async def create_device(
     db: Annotated[AsyncSession, Depends(get_db)],
     request: ResourceModelRequest,
 ) -> MessageResponse:
-    """Create a new device/resource"""
+    """
+    Create a new device/resource
+    """
+
     async with db.begin():  # Ensures rollback on failure
         actual_location = Location(
             latitude=request.actual_latitude,
@@ -171,8 +174,6 @@ async def create_device(
 
         resource_id = resource.id
 
-    # await db.commit()
-
     return {"message": "Resource Created", "resource_id": str(resource_id)}
 
 
@@ -183,7 +184,9 @@ async def create_device(
 async def get_device(
     db: Annotated[AsyncSession, Depends(get_db)], resource_id: str
 ) -> Resource:
-    """Get device/resource details"""
+    """
+    Get device/resource details
+    """
 
     resource_uuid = convertStringToUUID(resource_id)
 
@@ -207,7 +210,9 @@ async def update_device(
     resource_id: uuid_pkg.UUID,
     request: ResourceModelRequest,
 ) -> MessageResponse:
-    """Update resource details"""
+    """
+    Update resource details
+    """
 
     async with db.begin():  # Ensures rollback on failure
         # Find Resource
@@ -291,7 +296,9 @@ async def update_device(
 async def delete_device(
     db: Annotated[AsyncSession, Depends(get_db)], resource_id: uuid_pkg.UUID
 ):
-    """Delete a resource"""
+    """
+    Delete a resource
+    """
 
     async with db.begin():  # Ensures rollback on failure
         # Fetch Resource From DB From ID
@@ -338,6 +345,5 @@ async def delete_device(
 
         # Delete Resource
         await db.delete(resource)
-    await db.commit()
 
     return {"message": "Resource Deleted", "resource_id": resource.id}

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, {  useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
   Typography,
-  Paper,
   Grid,
   Card,
   CardContent,
@@ -20,34 +19,32 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField
-} from '@mui/material';
+  TextField,
+} from "@mui/material";
 import {
   Refresh as RefreshIcon,
   LocationOn as LocationIcon,
   AccessTime as AccessTimeIcon,
   Group as GroupIcon,
-  Add as AddIcon
-} from '@mui/icons-material';
+  Add as AddIcon,
+} from "@mui/icons-material";
 
-import { fetchEmergencies } from '../../redux/slices/emergenciesSlice';
+import { fetchEmergencies } from "../../redux/slices/emergenciesSlice";
 
 const Seguiment = () => {
-
   const dispatch = useDispatch();
-  const emergencies = useSelector(state => state.emergencies.emergencies);
+  const emergencies = useSelector((state) => state.emergencies.emergencies);
   const [openUpdateModal, setOpenUpdateModal] = React.useState(false);
   const [selectedEmergency, setSelectedEmergency] = React.useState(null);
-  const [newUpdate, setNewUpdate] = React.useState('');
-  const [isLoading, setIsLoading] = useState(true);
-
+  const [newUpdate, setNewUpdate] = React.useState("");
 
   useEffect(() => {
     dispatch(fetchEmergencies());
-    const idEmergencies = setInterval(() => (
-      dispatch(fetchEmergencies())
-    ), 100000);
-    return () => clearInterval(idEmergencies) ;  
+    const idEmergencies = setInterval(
+      () => dispatch(fetchEmergencies()),
+      100000,
+    );
+    return () => clearInterval(idEmergencies);
   }, []);
 
   const handleOpenUpdateModal = (emergency) => {
@@ -57,47 +54,54 @@ const Seguiment = () => {
 
   const handleCloseUpdateModal = () => {
     setSelectedEmergency(null);
-    setNewUpdate('');
+    setNewUpdate("");
     setOpenUpdateModal(false);
   };
 
   const handleAddUpdate = () => {
     if (!newUpdate.trim()) return;
 
-    const updatedEmergencies = emergencies.map(emergency => {
+    const updatedEmergencies = emergencies.map((emergency) => {
       if (emergency.id === selectedEmergency.id) {
         const updates = emergency.updates || [];
         const newUpdates = [
           {
             id: Date.now(),
             time: new Date().toISOString(),
-            message: newUpdate.trim()
+            message: newUpdate.trim(),
           },
-          ...updates
+          ...updates,
         ].slice(0, 3); // Mantener solo las 3 últimas actualizaciones
 
         return {
           ...emergency,
           updates: newUpdates,
-          lastUpdate: new Date().toISOString()
+          lastUpdate: new Date().toISOString(),
         };
       }
       return emergency;
     });
 
     //setEmergencies(updatedEmergencies);
-    dispatch(fetchEmergencies)
-    localStorage.setItem('incidents', JSON.stringify(updatedEmergencies));
+    dispatch(fetchEmergencies);
+    localStorage.setItem("incidents", JSON.stringify(updatedEmergencies));
     handleCloseUpdateModal();
   };
 
   // Función para ordenar las emergencias
-  const activeEmergencies = emergencies.filter(e => e.status === 'Active');
-  const resolvedEmergencies = emergencies.filter(e => e.status !== 'Active');
+  const activeEmergencies = emergencies.filter((e) => e.status === "Active");
+  const resolvedEmergencies = emergencies.filter((e) => e.status !== "Active");
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" gutterBottom>
           Emergencies Tracking
         </Typography>
@@ -122,18 +126,21 @@ const Seguiment = () => {
               <CardHeader
                 title={emergency.title}
                 subheader={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <LocationIcon fontSize="small" />
                     <Typography variant="body2">
-                      { `Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}` || 'Unknown'}
+                      {`Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}` ||
+                        "Unknown"}
                     </Typography>
                   </Box>
                 }
                 action={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Chip
-                      label={emergency.status === 'Active' ? 'Active' : 'Error'}
-                      color={emergency.status === 'active' ? 'success' : 'error'}
+                      label={emergency.status === "Active" ? "Active" : "Error"}
+                      color={
+                        emergency.status === "active" ? "success" : "error"
+                      }
                     />
                     <IconButton
                       size="small"
@@ -148,61 +155,77 @@ const Seguiment = () => {
               <CardContent>
                 <Grid container spacing={2} sx={{ mb: 3 }}>
                   <Grid item xs={12} sm={4}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <AccessTimeIcon color="action" />
                       <Typography variant="body2">
-                        Last Update: {new Date(emergency.time_updated).toLocaleString()}
+                        Last Update:{" "}
+                        {new Date(emergency.time_updated).toLocaleString()}
                       </Typography>
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <GroupIcon color="action" />
                       <Typography variant="body2">
-                        Priority: {
-                          emergency.priority === 'Critical' ? 'Critical' :
-                          emergency.priority === 'High' ? 'High' :
-                          emergency.priority === 'Medium' ? 'Medium' : 
-                          emergency.priority === 'Low' ? 'Low' : 'Unknown'
-                        }
+                        Priority:{" "}
+                        {emergency.priority === "Critical"
+                          ? "Critical"
+                          : emergency.priority === "High"
+                            ? "High"
+                            : emergency.priority === "Medium"
+                              ? "Medium"
+                              : emergency.priority === "Low"
+                                ? "Low"
+                                : "Unknown"}
                       </Typography>
                     </Box>
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <GroupIcon color="action" />
                       <Typography variant="body2">
-                        Type: {
-                          emergency.emergency_type === 'Fire' ? 'Fire' :
-                          emergency.emergency_type === 'Medical' ? 'Medical' :
-                          emergency.emergency_type === 'Accident' ? 'Accident' :
-                          emergency.emergency_type === 'Natural Disaster' ? 'Desastre Natural' : 'Other'
-                        }
+                        Type:{" "}
+                        {emergency.emergency_type === "Fire"
+                          ? "Fire"
+                          : emergency.emergency_type === "Medical"
+                            ? "Medical"
+                            : emergency.emergency_type === "Accident"
+                              ? "Accident"
+                              : emergency.emergency_type === "Natural Disaster"
+                                ? "Desastre Natural"
+                                : "Other"}
                       </Typography>
                     </Box>
                   </Grid>
                 </Grid>
-                
-                
+
                 {/* ToDo - This part implementation should be done in the server in the future*/}
                 <Typography variant="subtitle2" gutterBottom>
-                  Last Updates {emergency.updates ? `(${emergency.updates.length}/3)` : '(0/3)'}
+                  Last Updates{" "}
+                  {emergency.updates
+                    ? `(${emergency.updates.length}/3)`
+                    : "(0/3)"}
                 </Typography>
                 <List>
-                  {(emergency.updates || []).slice(0, 3).map((update, index) => (
-                    <React.Fragment key={update.id}>
-                      <ListItem>
-                        <ListItemIcon>
-                          <AccessTimeIcon fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={update.message}
-                          secondary={new Date(update.time).toLocaleString()}
-                        />
-                      </ListItem>
-                      {index < Math.min((emergency.updates || []).length - 1, 2) && <Divider />}
-                    </React.Fragment>
-                  ))}
+                  {(emergency.updates || [])
+                    .slice(0, 3)
+                    .map((update, index) => (
+                      <React.Fragment key={update.id}>
+                        <ListItem>
+                          <ListItemIcon>
+                            <AccessTimeIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={update.message}
+                            secondary={new Date(update.time).toLocaleString()}
+                          />
+                        </ListItem>
+                        {index <
+                          Math.min((emergency.updates || []).length - 1, 2) && (
+                          <Divider />
+                        )}
+                      </React.Fragment>
+                    ))}
                   {(!emergency.updates || emergency.updates.length === 0) && (
                     <ListItem>
                       <ListItemText
@@ -226,42 +249,44 @@ const Seguiment = () => {
               Solved Emergencies
             </Typography>
           </Box>
-          
+
           <Grid container spacing={2}>
             {resolvedEmergencies.map((emergency) => (
               <Grid item xs={12} md={6} key={emergency.id}>
-                <Card sx={{ opacity: 0.8, transform: 'scale(0.95)' }}>
+                <Card sx={{ opacity: 0.8, transform: "scale(0.95)" }}>
                   <CardHeader
                     title={
-                      <Typography variant="h6">
-                        {emergency.title}
-                      </Typography>
+                      <Typography variant="h6">{emergency.title}</Typography>
                     }
                     subheader={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <LocationIcon fontSize="small" />
                         <Typography variant="body2">
-                        { `Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}` || 'Unknown'}
+                          {`Lat: ${emergency.location_emergency_data.latitude} Long: ${emergency.location_emergency_data.longitude}` ||
+                            "Unknown"}
                         </Typography>
                       </Box>
                     }
                     action={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip
-                          label="Solved"
-                          color="success"
-                          size="small"
-                        />
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Chip label="Solved" color="success" size="small" />
                       </Box>
                     }
                   />
                   <CardContent>
                     <Grid container spacing={1} sx={{ mb: 2 }}>
                       <Grid item xs={12}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <AccessTimeIcon color="action" fontSize="small" />
                           <Typography variant="body2">
-                            Last Update: {new Date(emergency.time_updated).toLocaleString()}
+                            Last Update:{" "}
+                            {new Date(emergency.time_updated).toLocaleString()}
                           </Typography>
                         </Box>
                       </Grid>
@@ -274,7 +299,12 @@ const Seguiment = () => {
         </>
       )}
 
-      <Dialog open={openUpdateModal} onClose={handleCloseUpdateModal} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openUpdateModal}
+        onClose={handleCloseUpdateModal}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Afegir Actualització</DialogTitle>
         <DialogContent>
           <TextField
@@ -299,4 +329,4 @@ const Seguiment = () => {
   );
 };
 
-export default Seguiment; 
+export default Seguiment;

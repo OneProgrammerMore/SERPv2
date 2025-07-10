@@ -47,32 +47,6 @@ class EmergencyRequest(BaseModel):
     id_contact: Optional[str] = None
 
 
-# UPDATE EMERGENCY
-class EmergencyUpdateRequest(BaseModel):
-    """Model for request/input data for updating an emergency endpoint"""
-
-    name: Optional[str] = None
-    description: Optional[str] = None
-    priority: Optional[PriorityType] = None
-    emergency_type: Optional[EmergencyType] = None
-    status: Optional[StatusType] = None
-
-    location_emergency: Optional[uuid_pkg.UUID] = None
-    address_emergency: Optional[uuid_pkg.UUID] = None
-
-    resource_id: Optional[uuid_pkg.UUID] = None
-    location_resource: Optional[uuid_pkg.UUID] = None
-    address_resource: Optional[uuid_pkg.UUID] = None
-
-    destination_id: Optional[uuid_pkg.UUID] = None
-    location_destination: Optional[uuid_pkg.UUID] = None
-    address_destination: Optional[uuid_pkg.UUID] = None
-
-    name_contact: Optional[str] = None
-    telephone_contact: Optional[str] = None
-    id_contact: Optional[str] = None
-
-
 class EmergencyModelResponse(BaseModel):
     """
     Model to return as Emergency Model
@@ -108,7 +82,6 @@ class EmergencyModelResponse(BaseModel):
 
 class EmergencyWithResourcesModelResponse(EmergencyModelResponse):
     resources: List[uuid_pkg.UUID]
-    # model_config = ConfigDict(from_attributes=True)
 
     model_config = {"arbitrary_types_allowed": True, "from_attributes": True}
 
@@ -285,10 +258,9 @@ async def update_alert(
             print("To Do - Deactivate QOSOD for Device", device.id)
 
         response = [{"emergecy_id": str(emergency.id), "message": "Updated"}]
-        # print("DEBUG - Respone", response)
+        
         return response
 
-    # return {"message": "Emergency updated", "emergecy_id": emergency.id}
     return {"message": "Updated", "emergency_id": str(emergency.id)}
 
 

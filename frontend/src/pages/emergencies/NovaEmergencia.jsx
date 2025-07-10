@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { 
-  Box, 
-  Typography, 
+import React from "react";
+import { useDispatch } from "react-redux";
+import {
+  Box,
+  Typography,
   Paper,
   Grid,
   TextField,
@@ -12,15 +12,13 @@ import {
   Select,
   MenuItem,
   Modal,
-  IconButton,
-  Alert
-} from '@mui/material';
-import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import { useNavigate } from 'react-router-dom';
+  Alert,
+} from "@mui/material";
+import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
-import { createEmergency } from '../../redux/slices/emergenciesSlice';
+import { createEmergency } from "../../redux/slices/emergenciesSlice";
 
 const MapComponent = ({ onLocationSelect }) => {
   useMapEvents({
@@ -33,17 +31,16 @@ const MapComponent = ({ onLocationSelect }) => {
 };
 
 const NovaEmergencia = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const [formData, setFormData] = React.useState({
-    name: '',
-    description: '',
-    emergency_type: 'Other',
-    priority: 'High',
-    latitude: '',
-    longitude: '',
-    telephone_contact: '',
+    name: "",
+    description: "",
+    emergency_type: "Other",
+    priority: "High",
+    latitude: "",
+    longitude: "",
+    telephone_contact: "",
   });
 
   const [openMap, setOpenMap] = React.useState(false);
@@ -51,14 +48,14 @@ const NovaEmergencia = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleLocationSelect = (lat, lng) => {
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
       latitude: lat.toFixed(6),
       longitude: lng.toFixed(6),
@@ -68,66 +65,63 @@ const NovaEmergencia = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     // Crear nueva incidencia con ID único y fecha
     const newIncident = {
       ...formData,
-      status: 'Active',
+      status: "Active",
     };
-    
-    try {
 
+    try {
       const resultAction = await dispatch(createEmergency(newIncident));
-      
+
       if (resultAction.payload.ok) {
-        console.log('Submitted successfully:', resultAction.payload);
+        console.log("Submitted successfully:", resultAction.payload);
 
         setShowSuccess(true);
         setFormData({
-          name: '',
-          description: '',
-          location: '',
-          emergency_type: 'Other',
-          priority: 'High',
-          latitude: '',
-          longitude: '',
-          telephone_contact: '',
+          name: "",
+          description: "",
+          location: "",
+          emergency_type: "Other",
+          priority: "High",
+          latitude: "",
+          longitude: "",
+          telephone_contact: "",
         });
         // Ocultar el mensaje después de 3 segundos
         setTimeout(() => {
           setShowSuccess(false);
         }, 3000);
-
       } else {
-        console.error('Submission failed:', resultAction.payload);
+        console.error("Submission failed:", resultAction.payload);
       }
-    }catch (error){
+    } catch (error) {
       console.log("Error during emergency creation:", error);
     }
-  }
-
+  };
 
   const handleCancel = () => {
     setFormData({
-      name: '',
-      description: '',
+      name: "",
+      description: "",
       // location: '',
-      emergency_type: 'Other',
-      priority: 'High',
-      latitude: '',
-      longitude: '',
+      emergency_type: "Other",
+      priority: "High",
+      latitude: "",
+      longitude: "",
       // selectedResource: ''
-      telephone_contact: ''
+      telephone_contact: "",
     });
   };
 
   const modalStyle = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '80%',
-    bgcolor: 'background.paper',
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "80%",
+    bgcolor: "background.paper",
     boxShadow: 24,
     p: 4,
   };
@@ -137,13 +131,13 @@ const NovaEmergencia = () => {
       <Typography variant="h4" gutterBottom>
         New Emergency
       </Typography>
-      
+
       {showSuccess && (
         <Alert severity="success" sx={{ mb: 2 }}>
           A new emergency has been succesfully created.
         </Alert>
       )}
-      
+
       <Paper sx={{ p: 3, mt: 3 }} elevation={0}>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
@@ -157,7 +151,7 @@ const NovaEmergencia = () => {
                 onChange={handleChange}
               />
             </Grid>
-            
+
             <Grid item xs={12}>
               <TextField
                 required
@@ -170,7 +164,7 @@ const NovaEmergencia = () => {
                 onChange={handleChange}
               />
             </Grid>
-            
+
             <Grid item xs={12}>
               <Button
                 fullWidth
@@ -205,7 +199,7 @@ const NovaEmergencia = () => {
                 }}
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
                 <InputLabel>Emergency Type</InputLabel>
@@ -223,7 +217,7 @@ const NovaEmergencia = () => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
                 <InputLabel>Priority</InputLabel>
@@ -251,7 +245,7 @@ const NovaEmergencia = () => {
                 required
               />
             </Grid>
-            
+
             {/* <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Recurs Assignat</InputLabel>
@@ -269,9 +263,17 @@ const NovaEmergencia = () => {
                 </Select>
               </FormControl>
             </Grid> */}
-            
+
             <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, height: '100%', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 2,
+                  height: "100%",
+                  alignItems: "center",
+                }}
+              >
                 <Button variant="outlined" onClick={handleCancel}>
                   Cancel
                 </Button>
@@ -290,14 +292,19 @@ const NovaEmergencia = () => {
         aria-labelledby="map-modal-title"
       >
         <Box sx={modalStyle}>
-          <Typography id="map-modal-title" variant="h6" component="h2" gutterBottom>
+          <Typography
+            id="map-modal-title"
+            variant="h6"
+            component="h2"
+            gutterBottom
+          >
             Select a location in the Map
           </Typography>
-          <Box sx={{ height: '500px', width: '100%' }}>
+          <Box sx={{ height: "500px", width: "100%" }}>
             <MapContainer
               center={[41.3879, 2.16992]}
               zoom={13}
-              style={{ height: '100%', width: '100%' }}
+              style={{ height: "100%", width: "100%" }}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -312,6 +319,4 @@ const NovaEmergencia = () => {
   );
 };
 
-
-
-export default NovaEmergencia; 
+export default NovaEmergencia;

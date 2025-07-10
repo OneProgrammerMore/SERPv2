@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { createTheme } from '@mui/material/styles';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+} from "react";
+import { createTheme } from "@mui/material/styles";
 
 const ThemeContext = createContext(null);
 
@@ -7,16 +13,16 @@ export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }) => {
   const [mode, setMode] = useState(() => {
-    const savedMode = localStorage.getItem('themeMode');
-    return savedMode || 'light';
+    const savedMode = localStorage.getItem("themeMode");
+    return savedMode || "light";
   });
 
   useEffect(() => {
-    localStorage.setItem('themeMode', mode);
+    localStorage.setItem("themeMode", mode);
   }, [mode]);
 
   const toggleTheme = () => {
-    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+    setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
   };
 
   const theme = useMemo(
@@ -25,27 +31,27 @@ export const ThemeProvider = ({ children }) => {
         palette: {
           mode,
           primary: {
-            main: '#1976d2',
+            main: "#1976d2",
           },
           secondary: {
-            main: '#dc004e',
+            main: "#dc004e",
           },
           emergency: {
-            main: '#f44336',
-            light: '#ff7961',
-            dark: '#ba000d',
-            contrastText: '#fff',
+            main: "#f44336",
+            light: "#ff7961",
+            dark: "#ba000d",
+            contrastText: "#fff",
           },
           resource: {
-            main: '#4caf50',
-            light: '#80e27e',
-            dark: '#087f23',
-            contrastText: '#fff',
+            main: "#4caf50",
+            light: "#80e27e",
+            dark: "#087f23",
+            contrastText: "#fff",
           },
-          ...(mode === 'dark' && {
+          ...(mode === "dark" && {
             background: {
-              default: '#303030',
-              paper: '#424242',
+              default: "#303030",
+              paper: "#424242",
             },
           }),
         },
@@ -53,13 +59,13 @@ export const ThemeProvider = ({ children }) => {
           MuiAppBar: {
             styleOverrides: {
               root: {
-                backgroundColor: mode === 'dark' ? '#1e1e1e' : '#1976d2',
+                backgroundColor: mode === "dark" ? "#1e1e1e" : "#1976d2",
               },
             },
           },
         },
       }),
-    [mode]
+    [mode],
   );
 
   const value = {
@@ -68,5 +74,7 @@ export const ThemeProvider = ({ children }) => {
     toggleTheme,
   };
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
-}; 
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
+};

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Box,
   Typography,
@@ -22,14 +22,14 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid
-} from '@mui/material';
+  Grid,
+} from "@mui/material";
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Add as AddIcon
-} from '@mui/icons-material';
-import { MOCK_USERS } from '../../context/AuthContext';
+  Add as AddIcon,
+} from "@mui/icons-material";
+import { MOCK_USERS } from "../../context/AuthContext";
 
 const GestioUsuaris = () => {
   const [users, setUsers] = React.useState([]);
@@ -39,38 +39,38 @@ const GestioUsuaris = () => {
   const [userToDelete, setUserToDelete] = React.useState(null);
   const [visiblePasswords, setVisiblePasswords] = React.useState({});
   const [formData, setFormData] = React.useState({
-    name: '',
-    email: '',
-    role: '',
-    status: 'active',
-    password: ''
+    name: "",
+    email: "",
+    role: "",
+    status: "active",
+    password: "",
   });
 
   // Cargar usuarios desde localStorage al iniciar, o usar MOCK_USERS si no hay datos
   React.useEffect(() => {
     try {
-      const storedUsers = localStorage.getItem('users');
-      
+      const storedUsers = localStorage.getItem("users");
+
       if (storedUsers) {
         // Si hay usuarios en localStorage, usarlos
         const parsedUsers = JSON.parse(storedUsers);
         setUsers(parsedUsers);
       } else {
         // Si no hay usuarios, inicializar con MOCK_USERS
-        console.log('No hay usuarios en localStorage, usando MOCK_USERS');
-        const initialUsers = MOCK_USERS.map(user => ({
+        console.log("No hay usuarios en localStorage, usando MOCK_USERS");
+        const initialUsers = MOCK_USERS.map((user) => ({
           id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
           password: user.password,
-          status: 'active'
+          status: "active",
         }));
         setUsers(initialUsers);
-        localStorage.setItem('users', JSON.stringify(initialUsers));
+        localStorage.setItem("users", JSON.stringify(initialUsers));
       }
     } catch (error) {
-      console.error('Error al cargar usuarios:', error);
+      console.error("Error al cargar usuarios:", error);
     }
   }, []); // Solo se ejecutará una vez al montar el componente
 
@@ -84,28 +84,28 @@ const GestioUsuaris = () => {
     setOpenDialog(false);
     setSelectedUser(null);
     setFormData({
-      name: '',
-      email: '',
-      role: '',
-      status: 'active',
-      password: ''
+      name: "",
+      email: "",
+      role: "",
+      status: "active",
+      password: "",
     });
   };
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSaveUser = () => {
     const newUsers = [...users];
-    
+
     if (selectedUser) {
       // Editar usuario existente
-      const index = newUsers.findIndex(u => u.id === selectedUser.id);
+      const index = newUsers.findIndex((u) => u.id === selectedUser.id);
       newUsers[index] = { ...formData, id: selectedUser.id };
     } else {
       // Añadir nuevo usuario
@@ -117,7 +117,7 @@ const GestioUsuaris = () => {
     }
 
     setUsers(newUsers);
-    localStorage.setItem('users', JSON.stringify(newUsers));
+    localStorage.setItem("users", JSON.stringify(newUsers));
     handleCloseDialog();
   };
 
@@ -127,9 +127,9 @@ const GestioUsuaris = () => {
   };
 
   const handleDeleteConfirm = () => {
-    const newUsers = users.filter(user => user.id !== userToDelete.id);
+    const newUsers = users.filter((user) => user.id !== userToDelete.id);
     setUsers(newUsers);
-    localStorage.setItem('users', JSON.stringify(newUsers));
+    localStorage.setItem("users", JSON.stringify(newUsers));
     setOpenDeleteDialog(false);
     setUserToDelete(null);
   };
@@ -141,27 +141,34 @@ const GestioUsuaris = () => {
 
   const getRoleLabel = (role) => {
     switch (role) {
-      case 'emergency_operator':
-        return 'Operador d\'Emergències';
-      case 'resource_personnel':
-        return 'Personal de Recursos';
-      case 'emergency_center':
-        return 'Centre d\'Emergències';
+      case "emergency_operator":
+        return "Operador d'Emergències";
+      case "resource_personnel":
+        return "Personal de Recursos";
+      case "emergency_center":
+        return "Centre d'Emergències";
       default:
         return role;
     }
   };
 
   const togglePasswordVisibility = (userId) => {
-    setVisiblePasswords(prev => ({
+    setVisiblePasswords((prev) => ({
       ...prev,
-      [userId]: !prev[userId]
+      [userId]: !prev[userId],
     }));
   };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" gutterBottom>
           Gestió d'Usuaris
         </Typography>
@@ -197,8 +204,8 @@ const GestioUsuaris = () => {
                 <TableCell>{getRoleLabel(user.role)}</TableCell>
                 <TableCell>
                   <Chip
-                    label={user.status === 'active' ? 'Actiu' : 'Inactiu'}
-                    color={user.status === 'active' ? 'success' : 'default'}
+                    label={user.status === "active" ? "Actiu" : "Inactiu"}
+                    color={user.status === "active" ? "success" : "default"}
                     size="small"
                   />
                 </TableCell>
@@ -206,22 +213,25 @@ const GestioUsuaris = () => {
                   <Box
                     onClick={() => togglePasswordVisibility(user.id)}
                     sx={{
-                      cursor: 'pointer',
-                      filter: visiblePasswords[user.id] ? 'none' : 'blur(4px)',
-                      '&:hover': {
-                        opacity: 0.8
-                      }
+                      cursor: "pointer",
+                      filter: visiblePasswords[user.id] ? "none" : "blur(4px)",
+                      "&:hover": {
+                        opacity: 0.8,
+                      },
                     }}
                   >
                     {user.password}
                   </Box>
                 </TableCell>
                 <TableCell align="right">
-                  <IconButton size="small" onClick={() => handleEditClick(user)}>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleEditClick(user)}
+                  >
                     <EditIcon />
                   </IconButton>
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     color="error"
                     onClick={() => handleDeleteClick(user)}
                   >
@@ -234,9 +244,14 @@ const GestioUsuaris = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
-          {selectedUser ? 'Editar Usuari' : 'Nou Usuari'}
+          {selectedUser ? "Editar Usuari" : "Nou Usuari"}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
@@ -279,9 +294,15 @@ const GestioUsuaris = () => {
                     name="role"
                     onChange={handleInputChange}
                   >
-                    <MenuItem value="emergency_operator">Operador d'Emergències</MenuItem>
-                    <MenuItem value="resource_personnel">Personal de Recursos</MenuItem>
-                    <MenuItem value="emergency_center">Centre d'Emergències</MenuItem>
+                    <MenuItem value="emergency_operator">
+                      Operador d'Emergències
+                    </MenuItem>
+                    <MenuItem value="resource_personnel">
+                      Personal de Recursos
+                    </MenuItem>
+                    <MenuItem value="emergency_center">
+                      Centre d'Emergències
+                    </MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -304,8 +325,8 @@ const GestioUsuaris = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel·lar</Button>
-          <Button 
-            onClick={handleSaveUser} 
+          <Button
+            onClick={handleSaveUser}
             variant="contained"
             disabled={!formData.name || !formData.email || !formData.role}
           >
@@ -314,21 +335,21 @@ const GestioUsuaris = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={openDeleteDialog}
-        onClose={handleDeleteCancel}
-      >
-        <DialogTitle>
-          Confirmar Eliminació
-        </DialogTitle>
+      <Dialog open={openDeleteDialog} onClose={handleDeleteCancel}>
+        <DialogTitle>Confirmar Eliminació</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Estàs segur que vols eliminar l'usuari {userToDelete?.name}? Aquesta acció no es pot desfer.
+            Estàs segur que vols eliminar l'usuari {userToDelete?.name}? Aquesta
+            acció no es pot desfer.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDeleteCancel}>Cancel·lar</Button>
-          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+          >
             Eliminar
           </Button>
         </DialogActions>
@@ -337,4 +358,4 @@ const GestioUsuaris = () => {
   );
 };
 
-export default GestioUsuaris; 
+export default GestioUsuaris;

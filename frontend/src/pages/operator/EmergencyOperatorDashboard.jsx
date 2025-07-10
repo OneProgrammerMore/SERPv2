@@ -1,20 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { 
-  Grid, 
-  Paper, 
-  Typography, 
-  Box, 
-  Tabs, 
-  Tab, 
-  CircularProgress, 
-  Button, 
-  Chip, 
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  Grid,
+  Paper,
+  Typography,
+  Box,
+  Tabs,
+  Tab,
+  CircularProgress,
+  Button,
+  Chip,
   Divider,
-  Card, 
-  CardContent, 
+  Card,
+  CardContent,
   CardHeader,
-  IconButton,
   TextField,
   List,
   ListItem,
@@ -29,9 +28,9 @@ import {
   Select,
   MenuItem,
   Alert,
-  Modal
-} from '@mui/material';
-import { 
+  Modal,
+} from "@mui/material";
+import {
   Refresh as RefreshIcon,
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
@@ -39,15 +38,19 @@ import {
   Assignment as AssignmentIcon,
   Add as AddIcon,
   Edit as EditIcon,
-  NotificationsActive as AlertIcon,
   Check as CheckIcon,
   Close as CloseIcon,
-  Search as SearchIcon
-} from '@mui/icons-material';
-import { fetchEmergencies, createEmergency, updateEmergency, assignResourcesToEmergency } from '../../redux/slices/emergenciesSlice';
-import { fetchResourcesWithAssignments } from '../../redux/slices/resourcesSlice';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
+  Search as SearchIcon,
+} from "@mui/icons-material";
+import {
+  fetchEmergencies,
+  createEmergency,
+  updateEmergency,
+  assignResourcesToEmergency,
+} from "../../redux/slices/emergenciesSlice";
+import { fetchResourcesWithAssignments } from "../../redux/slices/resourcesSlice";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
 
 const MapComponent = ({ onLocationSelect }) => {
   useMapEvents({
@@ -61,7 +64,7 @@ const MapComponent = ({ onLocationSelect }) => {
 
 // Panel de estadísticas
 const StatPanel = ({ title, value, color }) => (
-  <Card elevation={2} sx={{ height: '100%' }}>
+  <Card elevation={2} sx={{ height: "100%" }}>
     <CardContent>
       <Typography variant="h6" color="textSecondary" gutterBottom>
         {title}
@@ -74,35 +77,47 @@ const StatPanel = ({ title, value, color }) => (
 );
 
 // Componente de tarjeta de emergencia
-const EmergencyCard = ({ emergency, onAssign, onUpdate, onResolve, resources }) => {
+const EmergencyCard = ({
+  emergency,
+  onAssign,
+  onUpdate,
+  onResolve,
+  resources,
+}) => {
   const statusLabels = {
-    Active: 'Active',
-    Pending: 'Pending',
-    Solved: 'Solved',
-    Archived: 'Archived'
+    Active: "Active",
+    Pending: "Pending",
+    Solved: "Solved",
+    Archived: "Archived",
   };
-  
+
   return (
     <Card elevation={3} sx={{ mb: 2 }}>
-      <CardHeader 
+      <CardHeader
         title={emergency.name}
         subheader={
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
             <LocationIcon fontSize="small" sx={{ mr: 0.5 }} />
             <Typography variant="body2">
               {`Lat: ${emergency?.location_emergency_data?.latitude ? emergency.location_emergency_data.latitude : "NA"}
-              Long: ${emergency?.location_emergency_data?.longitude ? emergency.location_emergency_data.longitude : "NA"}` }
+              Long: ${emergency?.location_emergency_data?.longitude ? emergency.location_emergency_data.longitude : "NA"}`}
             </Typography>
             <TimeIcon fontSize="small" sx={{ ml: 2, mr: 0.5 }} />
             <Typography variant="body2">
-              {new Date(emergency.time_created).toLocaleString('ca-ES')}
+              {new Date(emergency.time_created).toLocaleString("ca-ES")}
             </Typography>
           </Box>
         }
         action={
-          <Chip 
-            label={statusLabels[emergency.status]} 
-            color={emergency.status === 'Active' ? 'error' : emergency.status === 'Pending' ? 'warning' : 'success'}
+          <Chip
+            label={statusLabels[emergency.status]}
+            color={
+              emergency.status === "Active"
+                ? "error"
+                : emergency.status === "Pending"
+                  ? "warning"
+                  : "success"
+            }
             size="small"
           />
         }
@@ -111,51 +126,59 @@ const EmergencyCard = ({ emergency, onAssign, onUpdate, onResolve, resources }) 
         <Typography variant="body1" paragraph>
           {emergency.description}
         </Typography>
-        
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
           <Box>
             <Typography variant="subtitle2" gutterBottom>
               Contact Info:
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <PhoneIcon fontSize="small" sx={{ mr: 1 }} />
-              <Typography variant="body2">{emergency.telephone_contact}</Typography>
+              <Typography variant="body2">
+                {emergency.telephone_contact}
+              </Typography>
             </Box>
           </Box>
-          
+
           <Box>
             <Typography variant="subtitle2" gutterBottom>
-               {/* Assigned Resources: {emergency.resources?.length || 0} */}
-              Assigned Resources: {resources.filter(r => r.assignments != undefined && r.assignments[0] !=undefined && r.assignments[0].id == emergency.id).length || 0}
+              {/* Assigned Resources: {emergency.resources?.length || 0} */}
+              Assigned Resources:{" "}
+              {resources.filter(
+                (r) =>
+                  r.assignments !== undefined &&
+                  r.assignments[0] !== undefined &&
+                  r.assignments[0].id === emergency.id,
+              ).length || 0}
             </Typography>
           </Box>
         </Box>
-        
+
         <Divider sx={{ my: 2 }} />
-        
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-          {emergency.status !== 'Solved' && (
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          {emergency.status !== "Solved" && (
             <>
-              <Button 
-                size="small" 
-                startIcon={<AssignmentIcon />} 
+              <Button
+                size="small"
+                startIcon={<AssignmentIcon />}
                 variant="outlined"
                 onClick={() => onAssign(emergency.id)}
               >
                 Assign Resources
               </Button>
-              <Button 
-                size="small" 
-                startIcon={<EditIcon />} 
+              <Button
+                size="small"
+                startIcon={<EditIcon />}
                 variant="outlined"
                 onClick={() => onUpdate(emergency.id)}
               >
                 Update
               </Button>
-              <Button 
-                size="small" 
-                startIcon={<CheckIcon />} 
-                variant="contained" 
+              <Button
+                size="small"
+                startIcon={<CheckIcon />}
+                variant="contained"
                 color="success"
                 onClick={() => onResolve(emergency.id)}
               >
@@ -173,45 +196,57 @@ const EmergencyCard = ({ emergency, onAssign, onUpdate, onResolve, resources }) 
 const EmergencyOperatorDashboard = () => {
   const dispatch = useDispatch();
   const [tabValue, setTabValue] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogType, setDialogType] = useState('');
+  const [dialogType, setDialogType] = useState("");
   const [emergencyID, setSelectedEmergencyId] = useState(null);
   const [selectedResources, setSelectedResources] = useState([]);
   const [selectedResourcesPrev, setSelectedResourcesPrev] = useState([]);
   const [updateEmergencyData, setUpdateEmergencyData] = useState({
-    status: 'Pending',
-    description: ''
+    status: "Pending",
+    description: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [openMap, setOpenMap] = React.useState(false);
 
-  const resourcesStore = useSelector(state => state.resources.resourcesWithAssigments);
-  const statusResources = useSelector(state => state.resources.status);
-  const emergenciesStore = useSelector(state => state.emergencies.emergencies);
-  const statusEmergencies = useSelector(state => state.emergencies.status);
+  const resourcesStore = useSelector(
+    (state) => state.resources.resourcesWithAssigments,
+  );
+  const statusResources = useSelector((state) => state.resources.status);
+  const emergenciesStore = useSelector(
+    (state) => state.emergencies.emergencies,
+  );
+  const statusEmergencies = useSelector((state) => state.emergencies.status);
 
   const [emergencies, setEmergencies] = useState([]);
   const [resources, setResources] = useState([]);
 
-   // Estadísticas
+  // Estadísticas
   const [activeEmergencies, setActiveEmergencies] = React.useState(0);
   const [pendingEmergencies, setPendingEmergencies] = React.useState(0);
   const [solvedEmergencies, setSolvedEmergencies] = React.useState(0);
   const [availableResources, setAvailableResources] = React.useState(0);
-  const [assignedResources,setAssignedResources] = React.useState(0);
+  const [assignedResources, setAssignedResources] = React.useState(0);
   const computeStatisticsEmergencies = (emergenciesIn) => {
-    setActiveEmergencies(emergenciesIn.filter(e => e.status === 'Active').length)
-    setPendingEmergencies(emergenciesIn.filter(e => e.status === 'Pending').length)
-    setSolvedEmergencies(emergenciesIn.filter(e => e.status === 'Solved').length)
-  }
+    setActiveEmergencies(
+      emergenciesIn.filter((e) => e.status === "Active").length,
+    );
+    setPendingEmergencies(
+      emergenciesIn.filter((e) => e.status === "Pending").length,
+    );
+    setSolvedEmergencies(
+      emergenciesIn.filter((e) => e.status === "Solved").length,
+    );
+  };
   const computeStatisticsResources = (resourcesIn) => {
-    setAvailableResources(resourcesIn.filter(r => r.status == 'Available' ).length)
-    setAssignedResources(resourcesIn.filter(r => r.status == 'Busy' ).length)
+    setAvailableResources(
+      resourcesIn.filter((r) => r.status === "Available").length,
+    );
+    setAssignedResources(resourcesIn.filter((r) => r.status === "Busy").length);
     // setAssignedResources(resourcesIn.filter(r => typeof r.assignments !== 'undefined' && r.assignments.length > 0 && r.status == 'Busy' ).length)
     // setAvailableResources(resourcesIn.filter(r => r.status === 'undefined' || r.assignments.length == 0 ).length)
     // setAssignedResources(resourcesIn.filter(r => typeof r.assignments !== 'undefined' && r.assignments.length > 0 ).length)
-  }
+  };
 
   // Sync Redux state to local state
   useEffect(() => {
@@ -229,46 +264,44 @@ const EmergencyOperatorDashboard = () => {
     }
   }, [resourcesStore]);
 
-
   // Sync Redux state to local state
   useEffect(() => {
-    if(statusEmergencies != 'succeeded' && tabValue == 0){
+    if (statusEmergencies !== "succeeded" && tabValue === 0) {
       setIsLoading(false);
     }
   }, [statusEmergencies]);
 
   // Sync Redux state to local state
   useEffect(() => {
-    if(statusResources != 'succeeded' && tabValue == 1){
+    if (statusResources !== "succeeded" && tabValue === 1) {
       setIsLoading(false);
     }
   }, [statusResources]);
 
-  
   const modalStyle = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '80%',
-    bgcolor: 'background.paper',
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "80%",
+    bgcolor: "background.paper",
     boxShadow: 24,
     p: 4,
   };
   const [formData, setFormData] = React.useState({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     // location: '',
-    emergency_type: 'Other',
-    priority: 'High',
-    latitude: '',
-    longitude: '',
-    telephone_contact: '',
-    status: 'Active'
+    emergency_type: "Other",
+    priority: "High",
+    latitude: "",
+    longitude: "",
+    telephone_contact: "",
+    status: "Active",
     // selectedResource: ''
   });
   const handleLocationSelect = (lat, lng) => {
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
       latitude: lat.toFixed(6),
       longitude: lng.toFixed(6),
@@ -276,141 +309,151 @@ const EmergencyOperatorDashboard = () => {
     setOpenMap(false);
   };
 
-
   useEffect(() => {
-    dispatch(fetchEmergencies())
-    const idEmergencies = setInterval(() => (
-      dispatch(fetchEmergencies())
-    ), 100000);
+    dispatch(fetchEmergencies());
+    const idEmergencies = setInterval(
+      () => dispatch(fetchEmergencies()),
+      100000,
+    );
     dispatch(fetchResourcesWithAssignments());
-    const idResources = setInterval(() => (
-      dispatch(fetchResourcesWithAssignments())
-    ), 100000);
-    return () => clearInterval(idEmergencies), clearInterval(idResources) ;  
+    const idResources = setInterval(
+      () => dispatch(fetchResourcesWithAssignments()),
+      100000,
+    );
+    return (() => clearInterval(idEmergencies), clearInterval(idResources));
   }, []);
 
   // Filtrar emergencias por búsqueda
-  const filteredEmergencies = emergencies.filter(emergency => 
-    emergency.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //emergency.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emergency.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEmergencies = emergencies.filter(
+    (emergency) =>
+      emergency.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      //emergency.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emergency.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-  
+
   // const activeAlerts = alerts.filter(a => !a.resolved).length;
 
-  
   const handleRefresh = () => {
     dispatch(fetchEmergencies());
     dispatch(fetchResourcesWithAssignments());
   };
-  
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
-  
+
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
-  
+
   const handleAssignResources = (emergencyId) => {
     setSelectedEmergencyId(emergencyId);
-    setDialogType('assign');
+    setDialogType("assign");
     setOpenDialog(true);
   };
 
-
   const solveEmergency = (emergencyID) => {
     setSelectedEmergencyId(emergencyID);
-    setDialogType('solve');
+    setDialogType("solve");
     setOpenDialog(true);
-  }
+  };
 
   const handleDialogs = async () => {
     let updatedEmergency = {};
     let id;
 
-    switch(dialogType){
-      case 'create':
+    switch (dialogType) {
+      case "create":
         const newIncident = formData;
         dispatch(createEmergency(newIncident));
         setFormData({
-          name: '',
-          description: '',
-          emergency_type: 'Other',
-          priority: 'High',
-          latitude: '',
-          longitude: '',
-          telephone_contact: '',
-          status: 'Active'
+          name: "",
+          description: "",
+          emergency_type: "Other",
+          priority: "High",
+          latitude: "",
+          longitude: "",
+          telephone_contact: "",
+          status: "Active",
         });
         // Ocultar el mensaje después de 3 segundos
         dispatch(fetchEmergencies());
         break;
-      case 'assign':
-        dispatch(assignResourcesToEmergency({emergencyID, selectedResources}))//.unwrap();
+      case "assign":
+        dispatch(
+          assignResourcesToEmergency({ emergencyID, selectedResources }),
+        ); //.unwrap();
 
         break;
-      case 'solve':
+      case "solve":
         updatedEmergency = {
-          status: "Solved"
-        }
+          status: "Solved",
+        };
         id = emergencyID;
-        dispatch(updateEmergency({id, updatedEmergency}));
+        dispatch(updateEmergency({ id, updatedEmergency }));
         break;
-      case 'update':
+      case "update":
         updatedEmergency = {
           status: updateEmergencyData.status,
-          description: updateEmergencyData.description
-        }
+          description: updateEmergencyData.description,
+        };
         id = emergencyID;
-        dispatch(updateEmergency({id, updatedEmergency}));
+        dispatch(updateEmergency({ id, updatedEmergency }));
+        break;
+      default:
         break;
     }
     dispatch(fetchResourcesWithAssignments());
     dispatch(fetchEmergencies());
-    setOpenDialog(false)
-  }
+    setOpenDialog(false);
+  };
 
-  
   const handleUpdateEmergency = (emergencyId) => {
-    const emergency = emergencies.find(e => e.id === emergencyId);
+    const emergency = emergencies.find((e) => e.id === emergencyId);
     if (emergency) {
       setUpdateEmergencyData({
         status: emergency.status,
-        description: emergency.description
+        description: emergency.description,
       });
     }
     setSelectedEmergencyId(emergencyId);
-    setDialogType('update');
+    setDialogType("update");
     setOpenDialog(true);
   };
-  
+
   const findResourcesToEmergencyByID = (emergencyID) => {
     const prevResources = resources
-      .filter(r => r.assignments != undefined  && r.assignments[0] != undefined   && r.assignments[0].id == emergencyID)
-      .map(resource => (resource.id) )
-    return prevResources
-  }
+      .filter(
+        (r) =>
+          r.assignments !== undefined &&
+          r.assignments[0] !== undefined &&
+          r.assignments[0].id === emergencyID,
+      )
+      .map((resource) => resource.id);
+    return prevResources;
+  };
 
-  const handleOpenDialog = () =>{
-    switch(dialogType){
-      case 'create':
+  const handleOpenDialog = () => {
+    switch (dialogType) {
+      case "create":
         break;
-      case 'assign':
+      case "assign":
         setSelectedResourcesPrev(findResourcesToEmergencyByID(emergencyID));
         break;
-      case 'solve':
+      case "solve":
         break;
-      case 'update':
+      case "update":
+        break;
+      default:
         break;
     }
     dispatch(fetchResourcesWithAssignments());
     dispatch(fetchEmergencies());
-  }
+  };
 
   useEffect(() => {
     if (openDialog) {
-      handleOpenDialog()
+      handleOpenDialog();
     }
   }, [openDialog]);
 
@@ -419,85 +462,92 @@ const EmergencyOperatorDashboard = () => {
     setSelectedEmergencyId(null);
     setSelectedResources([]);
   };
-  
+
   const handleResourceSelection = (event) => {
     setSelectedResources(event.target.value);
     setSelectedResourcesPrev(event.target.value);
   };
-  
+
   const handleNewEmergencyChange = (event) => {
     const { name, value } = event.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
-  
+
   const handleUpdateEmergencyChange = (event) => {
     const { name, value } = event.target;
-    setUpdateEmergencyData(prev => ({
+    setUpdateEmergencyData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
-  
+
   // Verificar si los datos están cargando
-  // const isLoading = 
-  //   emergenciesStatus === 'loading' || 
-  //   resourcesStatus === 'loading' || 
+  // const isLoading =
+  //   emergenciesStatus === 'loading' ||
+  //   resourcesStatus === 'loading' ||
   //   alertsStatus === 'loading';
-    
+
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" gutterBottom>
           Operator Main Panel
         </Typography>
-        <Button 
-          startIcon={<RefreshIcon />} 
-          variant="outlined" 
+        <Button
+          startIcon={<RefreshIcon />}
+          variant="outlined"
           onClick={handleRefresh}
           disabled={isLoading}
         >
           Update
         </Button>
       </Box>
-      
+
       {/* Panel de estadísticas */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={2}>
-          <StatPanel 
-            title="Active Emergencies" 
-            value={activeEmergencies} 
-            color="error.main" 
+          <StatPanel
+            title="Active Emergencies"
+            value={activeEmergencies}
+            color="error.main"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={2}>
-          <StatPanel 
-            title="Pending Emergencies" 
-            value={pendingEmergencies} 
-            color="warning.main" 
+          <StatPanel
+            title="Pending Emergencies"
+            value={pendingEmergencies}
+            color="warning.main"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={2}>
-          <StatPanel 
-            title="Solved Emergencies" 
-            value={solvedEmergencies} 
-            color="success.main" 
+          <StatPanel
+            title="Solved Emergencies"
+            value={solvedEmergencies}
+            color="success.main"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={2}>
-          <StatPanel 
-            title="Available Resources" 
-            value={availableResources} 
-            color="info.main" 
+          <StatPanel
+            title="Available Resources"
+            value={availableResources}
+            color="info.main"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={2}>
-          <StatPanel 
-            title="Assigned Resources" 
-            value={assignedResources} 
-            color="secondary.main" 
+          <StatPanel
+            title="Assigned Resources"
+            value={assignedResources}
+            color="secondary.main"
           />
         </Grid>
         {/* <Grid item xs={12} sm={6} md={2}>
@@ -508,10 +558,17 @@ const EmergencyOperatorDashboard = () => {
           />
         </Grid> */}
       </Grid>
-      
+
       {/* Tabs y búsqueda */}
       <Paper sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 1,
+          }}
+        >
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label="Emergencies" />
             <Tab label="Resources" />
@@ -519,8 +576,8 @@ const EmergencyOperatorDashboard = () => {
             <Tab label="Alerts" />
             */}
           </Tabs>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             <TextField
               size="small"
               placeholder="Cercar..."
@@ -528,17 +585,17 @@ const EmergencyOperatorDashboard = () => {
               value={searchTerm}
               onChange={handleSearchChange}
               InputProps={{
-                startAdornment: <SearchIcon fontSize="small" sx={{ mr: 1 }} />
+                startAdornment: <SearchIcon fontSize="small" sx={{ mr: 1 }} />,
               }}
             />
-            
-            <Button 
-              variant="contained" 
-              color="primary" 
+
+            <Button
+              variant="contained"
+              color="primary"
               startIcon={<AddIcon />}
               sx={{ ml: 2 }}
               onClick={() => {
-                setDialogType('create');
+                setDialogType("create");
                 setOpenDialog(true);
               }}
             >
@@ -547,11 +604,11 @@ const EmergencyOperatorDashboard = () => {
           </Box>
         </Box>
       </Paper>
-      
+
       {/* Contenido principal */}
       <Paper sx={{ p: 2 }}>
         {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
             <CircularProgress />
           </Box>
         ) : (
@@ -562,21 +619,26 @@ const EmergencyOperatorDashboard = () => {
                 {filteredEmergencies.length === 0 ? (
                   <Alert severity="info">No found emergencies</Alert>
                 ) : (
-                  filteredEmergencies.filter( emergency => emergency.status != "Solved" && emergency.status != "Archived")
-                  .map(emergency => (
-                    <EmergencyCard 
-                      key={emergency.id}
-                      emergency={emergency}
-                      onAssign={handleAssignResources}
-                      onUpdate={handleUpdateEmergency}
-                      onResolve={solveEmergency}
-                      resources={resources}
-                    />
-                  ))
+                  filteredEmergencies
+                    .filter(
+                      (emergency) =>
+                        emergency.status !== "Solved" &&
+                        emergency.status !== "Archived",
+                    )
+                    .map((emergency) => (
+                      <EmergencyCard
+                        key={emergency.id}
+                        emergency={emergency}
+                        onAssign={handleAssignResources}
+                        onUpdate={handleUpdateEmergency}
+                        onResolve={solveEmergency}
+                        resources={resources}
+                      />
+                    ))
                 )}
               </Box>
             )}
-            
+
             {/* Tab de Recursos */}
             {tabValue === 1 && (
               <Box>
@@ -584,29 +646,33 @@ const EmergencyOperatorDashboard = () => {
                   {resources.length === 0 ? (
                     <Alert severity="info">Resources Not Found</Alert>
                   ) : (
-                    resources.map(resource => (
-                      <ListItem 
+                    resources.map((resource) => (
+                      <ListItem
                         key={resource.id}
                         secondaryAction={
-                          <Chip 
-                            label={resource.status} 
-                            color={resource.status == 'Available' ? 'success' :'secondary'} 
+                          <Chip
+                            label={resource.status}
+                            color={
+                              resource.status === "Available"
+                                ? "success"
+                                : "secondary"
+                            }
                             size="small"
                           />
                         }
                       >
                         <ListItemIcon>
-                          {resource.type === 'ambulance' ? (
+                          {resource.type === "ambulance" ? (
                             <PhoneIcon />
-                          ) : resource.type === 'police' ? (
+                          ) : resource.type === "police" ? (
                             <LocationIcon />
                           ) : (
                             <TimeIcon />
                           )}
                         </ListItemIcon>
-                        <ListItemText 
-                          primary={resource.name} 
-                          secondary={`Type: ${resource.resource_type} | Location: Lat: ${resource.location_resource_data.latitude} Long: ${resource.location_resource_data.longitude}`} 
+                        <ListItemText
+                          primary={resource.name}
+                          secondary={`Type: ${resource.resource_type} | Location: Lat: ${resource.location_resource_data.latitude} Long: ${resource.location_resource_data.longitude}`}
                         />
                       </ListItem>
                     ))
@@ -614,7 +680,7 @@ const EmergencyOperatorDashboard = () => {
                 </List>
               </Box>
             )}
-            
+
             {/* Tab de Alertas  - To Do For The future if needed... difference between alerts and emergencies?*/}
             {/* {tabValue === 2 && (
               <Box>
@@ -655,17 +721,22 @@ const EmergencyOperatorDashboard = () => {
           </>
         )}
       </Paper>
-      
+
       {/* Diálogos */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
-          {dialogType === 'assign' && 'Assign Resources'}
-          {dialogType === 'update' && 'Update Emergency'}
-          {dialogType === 'solve' && 'Solve Emergency'}
-          {dialogType === 'create' && 'Create New Emergency'}
+          {dialogType === "assign" && "Assign Resources"}
+          {dialogType === "update" && "Update Emergency"}
+          {dialogType === "solve" && "Solve Emergency"}
+          {dialogType === "create" && "Create New Emergency"}
         </DialogTitle>
         <DialogContent>
-          {dialogType === 'assign' && (
+          {dialogType === "assign" && (
             <FormControl fullWidth sx={{ mt: 2 }}>
               <InputLabel>Available Resources</InputLabel>
               <Select
@@ -674,9 +745,9 @@ const EmergencyOperatorDashboard = () => {
                 // value={selectedResources}
                 onChange={handleResourceSelection}
                 renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                     {selected.map((value) => {
-                      const resource = resources.find(r => r.id === value);
+                      const resource = resources.find((r) => r.id === value);
                       return (
                         <Chip key={value} label={resource?.name || value} />
                       );
@@ -687,7 +758,7 @@ const EmergencyOperatorDashboard = () => {
                 {resources
                   // ToDo Version 0.2 - Shown only the not assigned resources! [IMPORTANT!]
                   //.filter(resource =>  resource.assignments != undefined && resource.assignments[0] == undefined)
-                  .map(resource => (
+                  .map((resource) => (
                     <MenuItem key={resource.id} value={resource.id}>
                       {resource.name} - {resource.type}
                     </MenuItem>
@@ -695,8 +766,8 @@ const EmergencyOperatorDashboard = () => {
               </Select>
             </FormControl>
           )}
-          
-          {dialogType === 'update' && (
+
+          {dialogType === "update" && (
             <Box component="form" sx={{ mt: 2 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
@@ -729,14 +800,12 @@ const EmergencyOperatorDashboard = () => {
               </Grid>
             </Box>
           )}
-          
-          {dialogType === 'solve' && (
-            <Typography>
-              Are you sure the emergency is solved?
-            </Typography>
+
+          {dialogType === "solve" && (
+            <Typography>Are you sure the emergency is solved?</Typography>
           )}
-          
-          {dialogType === 'create' && (
+
+          {dialogType === "create" && (
             <Box component="form" sx={{ mt: 2 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
@@ -780,7 +849,6 @@ const EmergencyOperatorDashboard = () => {
                     value={formData.latitude}
                     onChange={handleNewEmergencyChange}
                     required
-
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -822,7 +890,9 @@ const EmergencyOperatorDashboard = () => {
                       <MenuItem value="Fire">Fire</MenuItem>
                       <MenuItem value="Medical">Medical</MenuItem>
                       <MenuItem value="Accident">Accident</MenuItem>
-                      <MenuItem value="Natural Disaster">Natural Disaster</MenuItem>
+                      <MenuItem value="Natural Disaster">
+                        Natural Disaster
+                      </MenuItem>
                       <MenuItem value="Other">Other</MenuItem>
                     </Select>
                   </FormControl>
@@ -865,14 +935,19 @@ const EmergencyOperatorDashboard = () => {
           aria-labelledby="map-modal-title"
         >
           <Box sx={modalStyle}>
-            <Typography id="map-modal-title" variant="h6" component="h2" gutterBottom>
+            <Typography
+              id="map-modal-title"
+              variant="h6"
+              component="h2"
+              gutterBottom
+            >
               Select a location in the Map
             </Typography>
-            <Box sx={{ height: '500px', width: '100%' }}>
+            <Box sx={{ height: "500px", width: "100%" }}>
               <MapContainer
                 center={[41.3879, 2.16992]}
                 zoom={13}
-                style={{ height: '100%', width: '100%' }}
+                style={{ height: "100%", width: "100%" }}
               >
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -888,9 +963,9 @@ const EmergencyOperatorDashboard = () => {
           <Button onClick={handleCloseDialog} startIcon={<CloseIcon />}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleDialogs} 
-            variant="contained" 
+          <Button
+            onClick={handleDialogs}
+            variant="contained"
             color="primary"
             startIcon={<CheckIcon />}
           >

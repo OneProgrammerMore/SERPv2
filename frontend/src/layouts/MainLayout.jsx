@@ -1,158 +1,157 @@
-import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { 
-  AppBar, 
-  Box, 
-  Toolbar, 
-  IconButton, 
-  Typography, 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
-  ListItemText, 
-  Divider, 
-  Avatar, 
-  Menu, 
-  MenuItem, 
-  Badge, 
-  Tooltip 
-} from '@mui/material';
+import React, { useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
+  Typography,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Avatar,
+  Menu,
+  MenuItem,
+  Badge,
+  Tooltip,
+} from "@mui/material";
 import {
   Notifications as NotificationsIcon,
   Dashboard as DashboardIcon,
   LocationOn as LocationIcon,
   People as PeopleIcon,
-  Settings as SettingsIcon,
   Brightness4 as Brightness4Icon,
   Brightness7 as Brightness7Icon,
-  ExitToApp as ExitToAppIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Assignment as AssignmentIcon,
-  LocalShipping as ResourcesIcon
-} from '@mui/icons-material';
+  LocalShipping as ResourcesIcon,
+} from "@mui/icons-material";
 
 const drawerWidth = 240;
 
 const MainLayout = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { mode, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
-  const notifications = useSelector(state => state.ui.notifications);
-  
+  const notifications = useSelector((state) => state.ui.notifications);
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
-  
+
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
-  
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-  
+
+  // const handleMenuClose = () => {
+  //   setAnchorEl(null);
+  // };
+
   const handleNotificationsOpen = (event) => {
     setNotificationsAnchorEl(event.currentTarget);
   };
-  
+
   const handleNotificationsClose = () => {
     setNotificationsAnchorEl(null);
   };
-  
-  const handleLogout = () => {
-    handleMenuClose();
-    logout();
-  };
-  
-  const unreadNotifications = notifications.filter(n => !n.read).length;
-  
+
+  // const handleLogout = () => {
+  //   handleMenuClose();
+  //   logout();
+  // };
+
+  const unreadNotifications = notifications.filter((n) => !n.read).length;
+
   // Menú lateral según el rol del usuario
   const getSidebarItems = () => {
     // Elementos básicos que todos los roles pueden ver
     const basicItems = [
       {
-        text: 'Main Panel',
+        text: "Main Panel",
         icon: <DashboardIcon />,
-        path: '/dashboard'
+        path: "/dashboard",
       },
       {
-        text: 'New Emergency',
+        text: "New Emergency",
         icon: <AddIcon />,
-        path: '/emergency/new'
+        path: "/emergency/new",
       },
       {
-        text: 'Emergency Editor',
+        text: "Emergency Editor",
         icon: <EditIcon />,
-        path: '/emergency/editor'
+        path: "/emergency/editor",
       },
       {
-        text: 'Tracking',
+        text: "Tracking",
         icon: <AssignmentIcon />,
-        path: '/emergency/tracking'
+        path: "/emergency/tracking",
       },
       {
-        text: 'Resources',
+        text: "Resources",
         icon: <ResourcesIcon />,
-        path: '/devices/resources'
-      }
+        path: "/devices/resources",
+      },
     ];
 
     // Elementos adicionales según el rol
     const adminItems = [
       {
-        text: 'User adminitration',
+        text: "User adminitration",
         icon: <PeopleIcon />,
-        path: '/users'
-      }
+        path: "/users",
+      },
     ];
 
     const resourceItems = [
       {
-        text: 'My Device',
+        text: "My Device",
         icon: <LocationIcon />,
-        path: '/my-device'
-      }
+        path: "/my-device",
+      },
     ];
-    
+
     // Determinar qué elementos mostrar según el rol
-    if (user?.role === 'emergency_center') {
+    if (user?.role === "emergency_center") {
       return [...basicItems, ...adminItems];
-    } else if (user?.role === 'resource_personnel') {
+    } else if (user?.role === "resource_personnel") {
       // return [...basicItems, ...resourceItems];
       return [...basicItems];
-    } else if (user?.role === 'emergency_operator') {
+    } else if (user?.role === "emergency_operator") {
       return basicItems;
     }
-    
+
     // Por defecto, mostrar solo elementos básicos
     return basicItems;
   };
-  
+
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: "flex" }}>
       {/* AppBar */}
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <img 
-              src="/resources/SERP_ico.png" 
-              alt="SERP Logo" 
-              style={{ 
-                height: '32px', 
-                marginRight: '12px' 
-              }} 
+      <AppBar
+        position="fixed"
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <img
+              src="/resources/SERP_ico.png"
+              alt="SERP Logo"
+              style={{
+                height: "32px",
+                marginRight: "12px",
+              }}
             />
             <Typography variant="h6" noWrap component="div">
               SERP - Sistema d'Emergències i Resposta Prioritaria
             </Typography>
           </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             {/* Botón de Notificaciones */}
             <Tooltip title="Notificacions">
               <IconButton color="inherit" onClick={handleNotificationsOpen}>
@@ -161,21 +160,21 @@ const MainLayout = () => {
                 </Badge>
               </IconButton>
             </Tooltip>
-            
+
             {/* Botón de cambio de tema */}
-            <Tooltip title={mode === 'dark' ? 'Mode clar' : 'Mode fosc'}>
+            <Tooltip title={mode === "dark" ? "Mode clar" : "Mode fosc"}>
               <IconButton color="inherit" onClick={toggleTheme}>
-                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                {mode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
               </IconButton>
             </Tooltip>
-            
+
             {/* Menú de usuario */}
-            <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
               <Tooltip title="Configuració del compte">
                 <IconButton onClick={handleMenuOpen} color="inherit">
-                  <Avatar 
-                    alt={user?.name || 'Usuari'} 
-                    src="/static/images/avatar/1.jpg" 
+                  <Avatar
+                    alt={user?.name || "Usuari"}
+                    src="/static/images/avatar/1.jpg"
                     sx={{ width: 32, height: 32 }}
                   />
                 </IconButton>
@@ -184,24 +183,26 @@ const MainLayout = () => {
           </Box>
         </Toolbar>
       </AppBar>
-      
+
       {/* Menú de notificaciones */}
       <Menu
         anchorEl={notificationsAnchorEl}
         open={Boolean(notificationsAnchorEl)}
         onClose={handleNotificationsClose}
-        sx={{ mt: '45px' }}
+        sx={{ mt: "45px" }}
       >
         {notifications.length === 0 ? (
           <MenuItem disabled>No hi ha notificacions</MenuItem>
         ) : (
           notifications.map((notification) => (
-            <MenuItem 
-              key={notification.id} 
+            <MenuItem
+              key={notification.id}
               onClick={handleNotificationsClose}
-              sx={{ 
-                backgroundColor: notification.read ? 'inherit' : 'rgba(25, 118, 210, 0.08)',
-                maxWidth: 300
+              sx={{
+                backgroundColor: notification.read
+                  ? "inherit"
+                  : "rgba(25, 118, 210, 0.08)",
+                maxWidth: 300,
               }}
             >
               <Typography variant="body2" noWrap>
@@ -211,47 +212,48 @@ const MainLayout = () => {
           ))
         )}
       </Menu>
-      
+
       {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { 
-            width: drawerWidth, 
-            boxSizing: 'border-box',
-            position: 'fixed'
+          [`& .MuiDrawer-paper`]: {
+            width: drawerWidth,
+            boxSizing: "border-box",
+            position: "fixed",
           },
         }}
       >
         <Toolbar /> {/* Espacio para el AppBar */}
-        <Box sx={{ overflow: 'auto' }}>
+        <Box sx={{ overflow: "auto" }}>
           <List>
             {getSidebarItems().map((item) => (
-              <ListItem 
-                button 
+              <ListItem
+                button
                 key={item.text}
                 onClick={() => navigate(item.path)}
               >
-                <ListItemIcon>
-                  {item.icon}
-                </ListItemIcon>
+                <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.text} />
               </ListItem>
             ))}
           </List>
         </Box>
       </Drawer>
-      
+
       {/* Contenido principal */}
-      <Box component="main" sx={{ 
-        flexGrow: 1, 
-        p: 3, 
-        width: `calc(100% - ${drawerWidth}px)`,
-        marginLeft: '0px !important',
-        transition: 'none !important'
-      }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: `calc(100% - ${drawerWidth}px)`,
+          marginLeft: "0px !important",
+          transition: "none !important",
+        }}
+      >
         <Toolbar /> {/* Espacio para el AppBar */}
         <Outlet />
       </Box>
@@ -259,4 +261,4 @@ const MainLayout = () => {
   );
 };
 
-export default MainLayout; 
+export default MainLayout;

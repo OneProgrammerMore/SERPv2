@@ -1,24 +1,24 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 // Slice inicial
 const initialState = {
   sidebarOpen: true,
   notifications: [],
-  currentView: 'map', // 'map' | 'list' | 'grid'
+  currentView: "map", // 'map' | 'list' | 'grid'
   filters: {
-    emergencyType: 'all',
-    status: 'all',
-    priority: 'all'
+    emergencyType: "all",
+    status: "all",
+    priority: "all",
   },
   mapSettings: {
     center: [41.3851, 2.1734], // Barcelona por defecto
-    zoom: 13
-  }
+    zoom: 13,
+  },
 };
 
 // Slice
 const uiSlice = createSlice({
-  name: 'ui',
+  name: "ui",
   initialState,
   reducers: {
     toggleSidebar: (state) => {
@@ -32,11 +32,13 @@ const uiSlice = createSlice({
         id: Date.now(),
         ...action.payload,
         read: false,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     },
     markNotificationAsRead: (state, action) => {
-      const notification = state.notifications.find(n => n.id === action.payload);
+      const notification = state.notifications.find(
+        (n) => n.id === action.payload,
+      );
       if (notification) {
         notification.read = true;
       }
@@ -50,7 +52,7 @@ const uiSlice = createSlice({
     setFilter: (state, action) => {
       state.filters = {
         ...state.filters,
-        ...action.payload
+        ...action.payload,
       };
     },
     resetFilters: (state) => {
@@ -61,8 +63,8 @@ const uiSlice = createSlice({
     },
     setMapZoom: (state, action) => {
       state.mapSettings.zoom = action.payload;
-    }
-  }
+    },
+  },
 });
 
 export const {
@@ -75,7 +77,7 @@ export const {
   setFilter,
   resetFilters,
   setMapCenter,
-  setMapZoom
+  setMapZoom,
 } = uiSlice.actions;
 
-export default uiSlice.reducer; 
+export default uiSlice.reducer;
