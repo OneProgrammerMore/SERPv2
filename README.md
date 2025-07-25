@@ -8,15 +8,65 @@ Emergency and Priority Response System - Project presented at Talent Arena 2025
 
 SERP is a comprehensive emergency management system that optimizes emergency response through network prioritization, real-time location tracking, and emergency resource allocation. The system integrates with Nokia API services to provide Quality of Service (QoS) for emergency vehicles and essential resource management.
 
-This project has been initially done by a team of 5 for the 2 days hackaton at Talent Arena 2025. As it could not be finished, neither presented, Mario Gómez García has "finished" it (work still in progress but parked).
+This project has been initially done by a team of 5 for the 2 days Hackaton at Talent Arena 2025. As it could not be finished, neither presented, Mario Gómez García has "finished" it (work still in progress but parked).
 
-The inital team was:
-  - Ariana
-  - Alex
-  - Joan Renau Valls
-  - Mario Gómez García
-  - Kiruru
+The initial team was:
+  - [Ariana](https://github.com/bavba)
+  - Alejandro Gomez Villoldo
+  - [Alex Sanchez Blabia](https://github.com/Caballosanex)
+  - [Joan Renau Valls](https://github.com/TwikiTuki)
+  - [Mario Gómez García](https://github.com/OneProgrammerMore)
 
+## Deployment
+
+### For Development
+1. Change VARS in docker-compose file:
+    - [ ] serp-fastapi
+        - [ ] API_URL_CORS
+        - [ ] SEED_DB_DEMO
+        - [ ] PORT
+    - [ ] serp-react
+        - [ ] REACT_APP_API_URL
+
+2. Start services using docker-compose
+```bash
+make start-dev
+# OR
+docker-compose up
+```
+
+**Useful Commands**
+- Start FASTAPI server demo seeder for database
+```bash
+docker exec -it serp-fastapi python main.py runserver
+```
+
+- Run demo seeder for database
+```bash
+docker exec -it serp-fastapi python main.py seeddb
+```
+
+- Drop all database data
+```bash
+docker exec -it serp-fastapi python main.py dropdb
+```
+
+
+### For Deployment
+1. Change VARS in docker-compose file:
+    - [ ] serp-fastapi
+        - [ ] API_URL_CORS
+        - [ ] SEED_DB_DEMO
+        - [ ] PORT
+    - [ ] serp-react
+        - [ ] REACT_APP_API_URL
+
+2. Start services using docker-compose
+```bash
+make start-deploy
+# OR
+docker-compose -f docker-compose.deploy.yml up
+```
 
 
 ## Key Features
@@ -234,8 +284,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Project presented at Talent Arena 2025
 - Thanks to Nokia for API integration specifications
-
-
 
 
 ### Creating Test Scenarios - DEPRECATED

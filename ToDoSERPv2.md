@@ -1,3 +1,28 @@
+# To Do SERPv2 - 2025-07-24
+- [x] README
+    - [x] Add Names To Readme
+    - [x] Clean README
+- [ ] Makefile and Scripts
+    - [ ] start-dev
+    - [ ] build-deploy
+    - [ ] start-deploy
+    - [ ] build-react
+    - [ ] delete-dbs
+    - [ ] delete-deps
+    - [ ] priv-dev
+    - [ ] priv-deploy
+- [ ] Docker-Compose Dev Auto
+- [ ] EsLint React App
+- [ ] PyLint FASTAPI
+- [ ] Docker-Compose Deploy
+- [ ] Docker-Compose React Build
+- [ ] Deploy root /
+- [ ] Deploy with prefix to root /projects/serp
+
+
+
+
+
 # To Do SERP - 2025-07-08
 - [x] Check and refactor endpoints for swagger documentation auto creation
 

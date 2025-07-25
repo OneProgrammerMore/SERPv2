@@ -1,0 +1,13 @@
+# Build stage
+FROM node:lts-alpine3.22
+
+WORKDIR /app
+
+# Copiar archivos de dependencias primero para aprovechar la caché de Docker
+COPY package.json ./
+
+# Copiar el resto de los archivos de la aplicación
+COPY . .
+
+# Comando para iniciar la aplicación 
+CMD ["npm", "run", "build-deploy"] 

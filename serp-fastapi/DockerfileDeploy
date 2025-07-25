@@ -1,0 +1,39 @@
+# ./backend/Dockerfile
+# FROM python:3.14.0rc1-alpine3.22
+FROM python:3.11-alpine3.22
+
+ENV USER=dutty
+ENV GROUPNAME=$USER
+ENV UID=1234
+ENV GID=1234
+
+RUN addgroup \
+    --gid "$GID" \
+    "$GROUPNAME" \
+&&  adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "$(pwd)" \
+    --ingroup "$GROUPNAME" \
+    --no-create-home \
+    --uid "$UID" \
+    $USER
+
+
+WORKDIR /app
+
+# Instalar dependencias del sistema
+RUN apk update && apk add build-base
+RUN apk add gcc python3-dev musl-dev linux-headers
+
+
+RUN pip install --upgrade pip
+RUN pip install --upgrade setuptools wheel
+COPY requirements.txt requirements.txt
+RUN pip install --no-compile --no-cache-dir -r requirements.txt
+
+COPY . .
+
+USER dutty
+
+CMD ["python", "main.py", "runserver"]

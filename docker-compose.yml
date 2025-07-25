@@ -1,51 +1,56 @@
-# filepath: docker-compose.yml
+version: "3.7"
+
 services:
-  backend:
-    build: ./backend 
-    container_name: SERP-backend
+  serp-fastapi:
+    build: ./serp-fastapi 
+    container_name: serp-fastapi
     ports:
       - "5001:5001"
     volumes:
-      - ./backend:/app
+      - ./serp-fastapi:/app
       - /app/__pycache__
     environment:
       - DEBUG=1
       - API_URL_CORS=http://192.168.1.131:3000
       - SEED_DB_DEMO=false
       - PORT=5001
-    command: ["sleep", "infinity"]
-    # entrypoint: [/app/entrypoint.sh]
-    #command: >
-    #  /bin/bash -c "chmod /app/entrypoint.sh"
-    # uvicorn main:app --host 0.0.0.0 --port 5001 --reload
-    # python main.py runserver
-    # python main.py seeddb
-    # python main.py dropdb
+      - URIS_PREFIX=/projects/serp
+    depends_on:
+      serp-db:
+        condition: service_healthy
+    command: python main.py runserver
+    #command: ["sleep", "infinity"]
 
-  
-  SERP-db:
+  serp-db:
     image: postgres:15.10-bookworm
-    container_name: SERP-db
+    container_name: serp-db
     volumes:
-      - ./docker/SERP-db:/var/lib/postgresql/data
+      - ./docker/serp-postgresql:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-serp_db}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
       
-  frontend:
+  serp-react:
     build: 
-      context: ./frontend
+      context: ./serp-react
       dockerfile: Dockerfile
-    container_name: SERP-frontend
+    container_name: serp-react
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app
+      - ./serp-react:/app
       - /app/node_modules
     environment:
       # - REACT_APP_API_URL=http://localhost:5001
-      - REACT_APP_API_URL=http://192.168.1.131:5001
+      - REACT_APP_API_URL=http://192.168.1.131:5001/projects/serp
+      - REACT_APP_ROUTES_PREFIX=/projects/serp
     depends_on:
-      - backend
+      - serp-fastapi
     stdin_open: true
