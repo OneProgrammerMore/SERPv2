@@ -1,9 +1,13 @@
 start-dev:
 	docker-compose -f docker-compose.yml up
+stop-dev:
+	docker-compose -f docker-compose.yml down
 build-deploy:
 	docker-compose -f docker-compose.deploy.yml build
 start-deploy:
-	docker-compose -f docker-compose.deploy.yml up
+	docker-compose -f docker-compose.deploy.yml up &
+stop-deploy:
+	docker-compose -f docker-compose.deploy.yml down
 build-react:
 	docker-compose -f docker-compose.react-build.yml up
 delete-dbs:

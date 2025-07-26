@@ -6,10 +6,12 @@ services:
       context: ./serp-react
       dockerfile: DockerfileBuild
     container_name: serp-react
-    command: /bin/sh -c "npm install && PUBLIC_URL=http://192.168.1.131/projects/serp npm run build-deploy"
+    #command: /bin/sh -c "npm install && PUBLIC_URL=http://192.168.1.130/projects/serp npm run build-deploy"
+    command: /bin/sh -c "npm install && npm run build-deploy"
     volumes:
       - ./serp-react:/app
       - /app/node_modules
     environment:
-      - REACT_APP_API_URL=http://192.168.1.131/projects/serp
+      - REACT_APP_API_URL=http://192.168.1.130/projects/serp
       - REACT_APP_ROUTES_PREFIX=/projects/serp
+      - PUBLIC_URL=http://192.168.1.130/projects/serp

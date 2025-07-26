@@ -7,13 +7,13 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     container_name: serp-gateway
-    ports:
-      - "80:80"
     volumes:
       - ./docker/gateway/nginx/logs:/var/log/nginx
       - ./docker/gateway/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    user: "1234:1234"
     networks:
       - serp-gateway-network
+      - gateway-network
     restart: always
   # FAST API BACKEND
   serp-fastapi:
@@ -23,7 +23,7 @@ services:
     container_name: serp-fastapi
     environment:
       - DEBUG=1
-      - API_URL_CORS=http://192.168.1.131:3000
+      - API_URL_CORS=http://192.168.1.130
       - PORT=5001
       - URIS_PREFIX=/projects/serp
     depends_on:
@@ -57,6 +57,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     container_name: serp-react-nginx
+    user: "1234:1234"
     volumes:
       - ./serp-react/build:/var/www/html
       - ./docker/serp-react/nginx/logs:/var/log/nginx
@@ -70,3 +71,7 @@ networks:
     driver: bridge
   serp-gateway-network:
     driver: bridge
+  gateway-network:
+    name: gateway-network
+    driver: bridge
+    external: true
