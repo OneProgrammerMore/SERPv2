@@ -5,7 +5,7 @@ stop-dev:
 build-deploy:
 	docker-compose -f docker-compose.deploy.yml build
 start-deploy:
-	docker-compose -f docker-compose.deploy.yml up &
+	docker-compose -f docker-compose.deploy.yml up -d
 stop-deploy:
 	docker-compose -f docker-compose.deploy.yml down
 build-react:
