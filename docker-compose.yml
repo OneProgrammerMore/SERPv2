@@ -42,15 +42,18 @@ services:
       context: ./serp-react
       dockerfile: Dockerfile
     container_name: serp-react
+    # command: sleep infinity
     ports:
       - "3000:3000"
+      - "3001:3001"
     volumes:
       - ./serp-react:/app
       - /app/node_modules
     environment:
       # - REACT_APP_API_URL=http://localhost:5001
-      - REACT_APP_API_URL=http://192.168.1.131:5001/projects/serp
-      - REACT_APP_ROUTES_PREFIX=/projects/serp
+      - REACT_APP_API_URL=http://192.168.1.130:5001/projects/serp
+      - REACT_APP_ROUTES_PREFIX=
+      #- REACT_APP_ROUTES_PREFIX=/projects/serp
     depends_on:
       - serp-fastapi
     stdin_open: true

@@ -22,13 +22,14 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build-deploy": "react-scripts build",
+    "build": "INLINE_RUNTIME_CHUNK=false REACT_APP_ROUTES_PREFIX= react-scripts build",
+    "build-deploy": "INLINE_RUNTIME_CHUNK=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "format": "prettier --write 'src/**/*.{js,jsx,mjs,ts,tsx,html,css,json}'",
     "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
-    "lint:fix": "eslint 'src/**/*.{js,jsx,ts,tsx}' --fix"
+    "lint:fix": "eslint 'src/**/*.{js,jsx,ts,tsx}' --fix",
+    "serve-build": "serve -s build  -p 3001"
   },
   "eslintConfig": {
     "extends": [
@@ -50,6 +51,7 @@
   },
   "devDependencies": {
     "eslint": "^8.57.1",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "serve": "^14.2.4"
   }
 }
