@@ -35,6 +35,8 @@ import { getBatteryStatus } from "../../redux/slices/batterySlice";
 import { fetchEmergencies } from "../../redux/slices/emergenciesSlice";
 import { useAuth } from "../../context/AuthContext";
 
+import useResponsiveFlexDirection, {useResponsiveVisibility} from '../../functions/responsiveFlexDirection';
+
 const ResourcePersonnelDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useAuth();
@@ -46,6 +48,9 @@ const ResourcePersonnelDashboard = () => {
   const emergencies = useSelector((state) => state.emergencies.emergencies);
   const emergenciesStatus = useSelector((state) => state.emergencies.status);
   const batteryLevel = useSelector((state) => state.battery.level);
+
+  const responsiveFlexDirection = useResponsiveFlexDirection();
+  
 
   // Estado para simular la calidad de señal
   const [qosStatus, setQosStatus] = useState({
@@ -135,10 +140,11 @@ const ResourcePersonnelDashboard = () => {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 3,
+          flexDirection: responsiveFlexDirection,
         }}
       >
         <Typography variant="h4" gutterBottom>
-          Tauler de Personal de Recursos
+          Resouce Main Panel
         </Typography>
         <Button
           startIcon={<RefreshIcon />}

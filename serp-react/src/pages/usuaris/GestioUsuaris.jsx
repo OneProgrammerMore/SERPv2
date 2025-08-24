@@ -31,6 +31,8 @@ import {
 } from "@mui/icons-material";
 import { MOCK_USERS } from "../../context/AuthContext";
 
+import useResponsiveFlexDirection, {useResponsiveVisibility} from '../../functions/responsiveFlexDirection';
+
 const GestioUsuaris = () => {
   const [users, setUsers] = React.useState([]);
   const [openDialog, setOpenDialog] = React.useState(false);
@@ -45,6 +47,9 @@ const GestioUsuaris = () => {
     status: "active",
     password: "",
   });
+
+
+  const responsiveFlexDirection = useResponsiveFlexDirection();
 
   // Cargar usuarios desde localStorage al iniciar, o usar MOCK_USERS si no hay datos
   React.useEffect(() => {
@@ -167,10 +172,11 @@ const GestioUsuaris = () => {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 3,
+          flexDirection: responsiveFlexDirection,
         }}
       >
         <Typography variant="h4" gutterBottom>
-          Gestió d'Usuaris
+          User Edition
         </Typography>
         <Button
           variant="contained"
@@ -180,10 +186,19 @@ const GestioUsuaris = () => {
             setOpenDialog(true);
           }}
         >
-          Nou Usuari
+          New User
         </Button>
       </Box>
+      
 
+      <div className="table-container"
+        style={{
+          overflowX: 'auto', 
+        }}
+      >
+        <div
+          style={{ width: "100%", display: "table", tableLayout: "fixed" }}
+        >
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -243,6 +258,9 @@ const GestioUsuaris = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      </div>
+      </div>
+
 
       <Dialog
         open={openDialog}

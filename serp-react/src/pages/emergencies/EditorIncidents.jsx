@@ -177,9 +177,21 @@ const EditorIncidents = () => {
           Emergencies Editor
         </Typography>
       </Box>
-
-      <TableContainer component={Paper}>
-        <Table>
+      
+      <div className="table-container"
+        style={{
+          overflowX: 'auto', 
+        }}
+      >
+        <div
+          style={{ width: "100%", display: "table", tableLayout: "fixed" }}
+        >
+      <TableContainer component={Paper} >
+        <Table
+          sx={{
+            overflowX: 'auto'
+          }}
+        >
           <TableHead>
             <TableRow>
               <TableCell>Title</TableCell>
@@ -297,6 +309,8 @@ const EditorIncidents = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      </div>
+      </div>
 
       <Dialog
         open={openDialog}

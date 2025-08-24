@@ -32,6 +32,8 @@ import "leaflet/dist/leaflet.css";
 import { fetchResources } from "../../redux/slices/resourcesSlice";
 import { fetchEmergencies } from "../../redux/slices/emergenciesSlice";
 
+import useResponsiveFlexDirection, {useResponsiveVisibility} from '../../functions/responsiveFlexDirection';
+
 // Función para convertir un componente SVG a URL de datos
 const svgToDataUrl = (IconComponent, color = "#FF0000") => {
   const svg = `
@@ -187,6 +189,8 @@ const Dashboard = () => {
   );
   const resources = useSelector((state) => state.resources?.resources || []);
 
+  const responsiveFlexDirection = useResponsiveFlexDirection();
+
   useEffect(() => {
     setIsLoading(true);
     dispatch(fetchEmergencies());
@@ -250,10 +254,11 @@ const Dashboard = () => {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 3,
+          flexDirection: useResponsiveFlexDirection,
         }}
       >
         <Typography variant="h4" gutterBottom>
-          Control Central Main Panel
+          Central Control
         </Typography>
         <Button
           startIcon={<RefreshIcon />}
@@ -329,6 +334,7 @@ const Dashboard = () => {
             alignItems: "center",
             justifyContent: "space-between",
             p: 1,
+            flexDirection: responsiveFlexDirection,
           }}
         >
           <Tabs value={tabValue} onChange={handleTabChange}>
@@ -417,7 +423,7 @@ const Dashboard = () => {
                           {emergency.description}
                         </Typography>
                         <Typography variant="caption">
-                          Estat:
+                          Status:
                           <Chip
                             size="small"
                             label={
@@ -451,7 +457,7 @@ const Dashboard = () => {
                   <Typography
                     align="center"
                     color="textSecondary"
-                    sx={{ py: 3 }}
+                    sx={{ py: 1 }}
                   >
                     No found emergencies
                   </Typography>
@@ -467,11 +473,11 @@ const Dashboard = () => {
                     </Typography>
 
                     {/* Emergencias activas y pendientes */}
-                    <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <Grid container spacing={1} sx={{ mb: 2 }}>
                       {filteredEmergencies
                         .filter((emergency) => emergency.status !== "solved")
                         .map((emergency) => (
-                          <Grid item xs={12} key={emergency.id}>
+                          <Grid item  key={emergency.id}>
                             <Card variant="outlined">
                               <CardHeader
                                 title={emergency.name}
@@ -486,6 +492,12 @@ const Dashboard = () => {
                                     }
                                   />
                                 }
+                                sx={{
+                                  display: 'relative',
+                                  flexDirection: responsiveFlexDirection,
+                                  justifyContent: 'flex-start',
+                                  left: '0'
+                                }}
                               />
                               <CardContent>
                                 <Typography

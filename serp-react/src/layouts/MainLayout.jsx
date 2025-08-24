@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAuth } from "../context/AuthContext";
@@ -30,11 +30,13 @@ import {
   Edit as EditIcon,
   Assignment as AssignmentIcon,
   LocalShipping as ResourcesIcon,
+  Menu as MenuIcon,
 } from "@mui/icons-material";
 
 import addPrefix from "../functions/prefixURL";
+import useResponsiveFlexDirection, {useResponsiveVisibility} from '../functions/responsiveFlexDirection';
 
-const drawerWidth = 240;
+
 
 const MainLayout = () => {
   const navigate = useNavigate();
@@ -45,6 +47,12 @@ const MainLayout = () => {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
+
+  const [menuWidth, setMenuWidth] =  useState('240px')
+  const [mainWidth, setMainWidth] =  useState(`calc(100% - 240px)`)
+  const [menuLeft, setMenuLeft] =  useState('-100%')
+  const [mainPosition, setMainPosition] =  useState('relative');
+  const [menuPosition, setMenuPosition] =  useState('absolute');
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -58,6 +66,51 @@ const MainLayout = () => {
     setNotificationsAnchorEl(null);
   };
   const unreadNotifications = notifications.filter((n) => !n.read).length;
+
+  const responsiveVisibility = useResponsiveVisibility();
+
+  const toggleMenu = () => {
+    if(menuLeft == '0%'){
+      setMenuLeft('-100%');
+    }else{
+      setMenuLeft('0%');
+    }
+  }
+
+  const closeMenu = () => {
+    setMenuLeft('-100%');
+  }
+
+  const navigateCustom = (section) => {
+    navigate(section);
+    if(window.innerWidth >= 800 == false){
+      closeMenu();
+    }
+  }
+
+  const menuResponsive = () => {
+    if(window.innerWidth >= 800){
+      setMenuLeft('0%');
+      setMenuWidth('240px');
+      setMainWidth(`calc(100% - 240px)`);
+      setMainPosition('relative');
+      setMenuPosition('fixed');
+    }else{
+      setMenuLeft('-100%');
+      setMenuWidth('100%');
+      setMainWidth('100%');
+      setMainPosition('absolute');
+      setMenuPosition('fixed');
+    }
+  }
+
+  window.addEventListener('resize', menuResponsive)
+
+  useEffect( () => {
+    menuResponsive();
+  }, []);
+
+
 
   // Menú lateral según el rol del usuario
   const getSidebarItems = () => {
@@ -113,7 +166,14 @@ const MainLayout = () => {
   };
 
   return (
-    <Box sx={{ display: "flex" }}>
+    
+    <Box sx={{ display: "flex"}}>
+
+      {/* Menu Button */}
+      <div className="menu-button" onClick={toggleMenu}>
+        <MenuIcon color="black" />
+      </div>
+
       {/* AppBar */}
       <AppBar
         position="fixed"
@@ -129,8 +189,8 @@ const MainLayout = () => {
                 marginRight: "12px",
               }}
             />
-            <Typography variant="h6" noWrap component="div">
-              SERP - Sistema d'Emergències i Resposta Prioritaria
+            <Typography variant="h6" noWrap component="div" sx={{fontSize: '12px', display: 'flex', flexDirection: 'row'}}>
+              SERP <div style={{display: responsiveVisibility}}> - Sistema d'Emergències i Resposta Prioritaria </div>
             </Typography>
           </Box>
 
@@ -197,26 +257,36 @@ const MainLayout = () => {
       </Menu>
 
       {/* Sidebar */}
+      <div className="menu-container" 
+        style={{
+          left: menuLeft,
+          width: menuWidth,
+          position: menuPosition,
+        }}
+      >
       <Drawer
         variant="permanent"
+        
         sx={{
-          width: drawerWidth,
+          width: menuWidth,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
-            width: drawerWidth,
+          [`& .MuiDrawer-paper`]: { 
+            width: menuWidth,
             boxSizing: "border-box",
-            position: "fixed",
+            position: "relative",
           },
         }}
       >
         <Toolbar /> {/* Espacio para el AppBar */}
-        <Box sx={{ overflow: "auto" }}>
+        <Box sx={{ 
+          overflow: "auto"
+          }}>
           <List>
             {getSidebarItems().map((item) => (
               <ListItem
                 button
                 key={item.text}
-                onClick={() => navigate(item.path)}
+                onClick={() => navigateCustom(item.path)}
               >
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.text} />
@@ -225,22 +295,31 @@ const MainLayout = () => {
           </List>
         </Box>
       </Drawer>
+      </div>
+
 
       {/* Contenido principal */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: `calc(100% - ${drawerWidth}px)`,
-          marginLeft: "0px !important",
-          transition: "none !important",
+      <div className="main-container"
+        style={{
+          width: mainWidth,
+          position: mainPosition,
         }}
       >
-        <Toolbar /> {/* Espacio para el AppBar */}
-        <Outlet />
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            marginLeft: "0px !important",
+            transition: "none !important",
+          }}
+        >
+          <Toolbar /> {/* Espacio para el AppBar */}
+          <Outlet />
+        </Box>
+      
+      </div>
       </Box>
-    </Box>
   );
 };
 

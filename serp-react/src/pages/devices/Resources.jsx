@@ -42,6 +42,10 @@ import {
 } from "../../redux/slices/resourcesSlice";
 import CardActions from "@mui/material/CardActions";
 import addPrefix from "../../functions/prefixURL";
+
+import useResponsiveFlexDirection from '../../functions/responsiveFlexDirection';
+
+
 const modalStyle = {
   position: "absolute",
   top: "50%",
@@ -53,6 +57,7 @@ const modalStyle = {
   p: 4,
   borderRadius: 2,
 };
+
 
 const MapComponent = ({ onLocationSelect }) => {
   useMapEvents({
@@ -128,6 +133,25 @@ const Resources = () => {
     actual_latitude: "",
     actual_longitude: "",
   });
+
+
+
+  // const [responsiveFlexDirection, setResponsiveFlexDirection] = useState('row');
+  // const menuResponsiveFlexDirection = () => {
+  //   if(window.innerWidth >= 800){
+  //     setResponsiveFlexDirection('row');
+  //   }else{
+  //     setResponsiveFlexDirection('column');
+  //   }
+  // }
+  // useEffect( () => {
+  //   menuResponsiveFlexDirection();
+  // }, []);
+  // window.addEventListener('resize', menuResponsiveFlexDirection)
+  const responsiveFlexDirection = useResponsiveFlexDirection();
+
+
+
 
   useEffect(() => {
     dispatch(fetchResources());
@@ -321,6 +345,7 @@ const Resources = () => {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 3,
+          flexDirection: responsiveFlexDirection, 
         }}
       >
         <Typography variant="h4" gutterBottom>

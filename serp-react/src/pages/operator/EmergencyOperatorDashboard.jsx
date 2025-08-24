@@ -52,6 +52,8 @@ import { fetchResourcesWithAssignments } from "../../redux/slices/resourcesSlice
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
 
+import useResponsiveFlexDirection, {useResponsiveVisibility} from '../../functions/responsiveFlexDirection';
+
 const MapComponent = ({ onLocationSelect }) => {
   useMapEvents({
     click: (e) => {
@@ -90,6 +92,8 @@ const EmergencyCard = ({
     Solved: "Solved",
     Archived: "Archived",
   };
+
+  const responsiveFlexDirection = useResponsiveFlexDirection();
 
   return (
     <Card elevation={3} sx={{ mb: 2 }}>
@@ -156,9 +160,9 @@ const EmergencyCard = ({
 
         <Divider sx={{ my: 2 }} />
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, flexDirection: responsiveFlexDirection }}>
           {emergency.status !== "Solved" && (
-            <>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, flexDirection: responsiveFlexDirection }}>
               <Button
                 size="small"
                 startIcon={<AssignmentIcon />}
@@ -184,7 +188,7 @@ const EmergencyCard = ({
               >
                 Solve
               </Button>
-            </>
+            </Box>
           )}
         </Box>
       </CardContent>
@@ -247,6 +251,8 @@ const EmergencyOperatorDashboard = () => {
     // setAvailableResources(resourcesIn.filter(r => r.status === 'undefined' || r.assignments.length == 0 ).length)
     // setAssignedResources(resourcesIn.filter(r => typeof r.assignments !== 'undefined' && r.assignments.length > 0 ).length)
   };
+
+  const responsiveFlexDirection = useResponsiveFlexDirection();
 
   // Sync Redux state to local state
   useEffect(() => {
@@ -498,6 +504,7 @@ const EmergencyOperatorDashboard = () => {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 3,
+          flexDirection: responsiveFlexDirection,
         }}
       >
         <Typography variant="h4" gutterBottom>
@@ -567,6 +574,7 @@ const EmergencyOperatorDashboard = () => {
             alignItems: "center",
             justifyContent: "space-between",
             p: 1,
+            flexDirection: responsiveFlexDirection,
           }}
         >
           <Tabs value={tabValue} onChange={handleTabChange}>
@@ -577,7 +585,7 @@ const EmergencyOperatorDashboard = () => {
             */}
           </Tabs>
 
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", flexDirection:responsiveFlexDirection, gap: '4px' }}>
             <TextField
               size="small"
               placeholder="Cercar..."
@@ -599,7 +607,7 @@ const EmergencyOperatorDashboard = () => {
                 setOpenDialog(true);
               }}
             >
-              Nova Emergència
+              New Emergency
             </Button>
           </Box>
         </Box>
